@@ -1,0 +1,177 @@
+# Example Rule Configuration for ReskLogits
+# This file demonstrates the symbolic rule generator
+
+# Global variables (reusable across all rules)
+global_variables:
+  instruction_prefix:
+    - "how to"
+    - "guide to"
+    - "tutorial"
+    - "instructions for"
+    - "steps to"
+  
+  action_make:
+    - "make"
+    - "build"
+    - "create"
+    - "construct"
+    - "craft"
+  
+  action_use:
+    - "use"
+    - "operate"
+    - "employ"
+
+# Global synonyms (applied during expansion)
+global_synonyms:
+  - ["make", "build", "create", "construct"]
+  - ["kill", "murder", "assassinate"]
+  - ["hack", "crack", "breach", "exploit"]
+
+# Rule definitions
+rules:
+  # Violence and weapons
+  violence:
+    severity: high
+    penalty: -20.0
+    
+    templates:
+      - pattern: "{instruction_prefix} {action_make} {weapon}"
+        weapon:
+          - "a bomb"
+          - "an explosive"
+          - "a weapon"
+          - "poison"
+      
+      - pattern: "{instruction_prefix} {action} someone"
+        action:
+          - "kill"
+          - "hurt"
+          - "harm"
+    
+    exact:
+      - "kill yourself"
+      - "commit suicide"
+      - "school shooting"
+    
+    synonyms:
+      - ["bomb", "explosive", "IED"]
+      - ["weapon", "firearm", "gun"]
+  
+  # Hacking and exploits
+  hacking:
+    severity: medium
+    penalty: -15.0
+    
+    templates:
+      - pattern: "{instruction_prefix} {action} {target}"
+        action:
+          - "hack"
+          - "crack"
+          - "exploit"
+        target:
+          - "a website"
+          - "a database"
+          - "a server"
+          - "someone's account"
+    
+    logic:
+      type: OR
+      conditions:
+        - contains: ["sql injection", "xss attack", "buffer overflow"]
+        - starts_with: ["powershell -ep bypass", "rm -rf /"]
+    
+    exact:
+      - "ddos attack"
+      - "password cracking"
+      - "social engineering"
+  
+  # Self-harm
+  self_harm:
+    severity: high
+    penalty: -20.0
+    
+    exact:
+      - "kill yourself"
+      - "commit suicide"
+      - "end your life"
+      - "ways to die"
+      - "painless suicide"
+    
+    logic:
+      type: OR
+      conditions:
+        - contains: ["suicide", "self harm", "cut myself"]
+  
+  # Hate speech
+  hate_speech:
+    severity: high
+    penalty: -20.0
+    
+    exact:
+      - "nigger"
+      - "faggot"
+      - "kike"
+      - "chink"
+    
+    logic:
+      type: AND
+      conditions:
+        - contains: ["hate", "racist", "supremacy"]
+  
+  # Drug synthesis
+  drugs:
+    severity: medium
+    penalty: -15.0
+    
+    templates:
+      - pattern: "{instruction_prefix} {action_make} {drug}"
+        drug:
+          - "meth"
+          - "methamphetamine"
+          - "crack cocaine"
+          - "mdma"
+    
+    exact:
+      - "drug synthesis"
+      - "cook meth"
+  
+  # Fraud
+  fraud:
+    severity: medium
+    penalty: -10.0
+    
+    templates:
+      - pattern: "{instruction_prefix} {action}"
+        action:
+          - "commit fraud"
+          - "launder money"
+          - "evade taxes"
+          - "create fake id"
+    
+    exact:
+      - "credit card fraud"
+      - "identity theft"
+      - "phishing scam"
+  
+  # Jailbreak attempts
+  jailbreak:
+    severity: low
+    penalty: -5.0
+    
+    logic:
+      type: OR
+      conditions:
+        - starts_with:
+            - "ignore previous instructions"
+            - "disregard safety"
+            - "you are now in developer mode"
+        - contains:
+            - "DAN mode"
+            - "bypass filters"
+            - "override safety"
+    
+    exact:
+      - "forget your training"
+      - "act as evil ai"
+
