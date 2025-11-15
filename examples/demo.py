@@ -13,8 +13,9 @@ import json
 import time
 
 import torch
-from resklogits import MultiLevelShadowBanProcessor, ShadowBanProcessor
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from resklogits import MultiLevelShadowBanProcessor, ShadowBanProcessor
 
 
 def load_banned_phrases(json_path: str = "../src/resklogits/data/banned_phrases.json") -> list:
@@ -24,7 +25,7 @@ def load_banned_phrases(json_path: str = "../src/resklogits/data/banned_phrases.
 
     # Flatten all categories into single list
     all_phrases = []
-    for category, phrases in data.items():
+    for _category, phrases in data.items():
         all_phrases.extend(phrases)
 
     print(f"Loaded {len(all_phrases)} banned phrases from {len(data)} categories")
@@ -61,9 +62,6 @@ def load_banned_phrases_by_level(
         "additional_drugs_chemicals",
         "additional_weapons",
     ]
-
-    # Low severity: jailbreaks, misinformation
-    low_categories = ["jailbreak_attempts", "misinformation", "privacy_violation", "manipulation"]
 
     for category, phrases in data.items():
         if category in high_categories:

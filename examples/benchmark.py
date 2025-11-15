@@ -14,8 +14,9 @@ import json
 import time
 
 import torch
-from resklogits import ShadowBanProcessor
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from resklogits import ShadowBanProcessor
 
 
 def benchmark_build_time(tokenizer, phrases, device="cuda"):
@@ -76,7 +77,7 @@ def benchmark_generation_overhead(
         # Without processor
         start = time.time()
         with torch.no_grad():
-            outputs_without = model.generate(
+            _ = model.generate(
                 **inputs,
                 max_new_tokens=max_tokens,
                 do_sample=False,
@@ -88,7 +89,7 @@ def benchmark_generation_overhead(
         processor.reset()
         start = time.time()
         with torch.no_grad():
-            outputs_with = model.generate(
+            _ = model.generate(
                 **inputs,
                 max_new_tokens=max_tokens,
                 do_sample=False,

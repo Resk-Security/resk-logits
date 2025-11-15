@@ -7,8 +7,9 @@ This minimal example shows the basic setup without all the benchmarking.
 import json
 
 import torch
-from resklogits import ShadowBanProcessor
 from transformers import AutoModelForCausalLM, AutoTokenizer
+
+from resklogits import ShadowBanProcessor
 
 
 def main():
