@@ -37,7 +37,7 @@ def main():
 
     if rules_file.exists():
         # Read content for hashing
-        with open(rules_file, 'r') as f:
+        with open(rules_file, "r") as f:
             rules_content = f.read()
 
         rule_hash = cache.compute_hash(rules_content)
@@ -74,7 +74,7 @@ def main():
         print("Demo 4: Load from Cache")
         print("-" * 80)
 
-        first_hash = entries[0]['hash']
+        first_hash = entries[0]["hash"]
         cached_patterns = cache.load(first_hash)
         print(f"✓ Loaded {len(cached_patterns)} patterns from cache")
 
@@ -131,4 +131,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

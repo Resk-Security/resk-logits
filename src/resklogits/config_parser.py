@@ -45,14 +45,14 @@ class ConfigParser:
     def parse_file(self, yaml_path: str) -> Dict[str, RuleConfig]:
         """
         Parse YAML configuration file.
-        
+
         Args:
             yaml_path: Path to YAML file
-            
+
         Returns:
             Dict of rule name -> RuleConfig
         """
-        with open(yaml_path, 'r', encoding='utf-8') as f:
+        with open(yaml_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         return self.parse_dict(data)
@@ -60,10 +60,10 @@ class ConfigParser:
     def parse_dict(self, config: Dict[str, Any]) -> Dict[str, RuleConfig]:
         """
         Parse configuration dictionary.
-        
+
         Args:
             config: Configuration dict
-            
+
         Returns:
             Dict of rule name -> RuleConfig
         """
@@ -91,10 +91,10 @@ class ConfigParser:
     def generate_patterns_from_templates(self, templates: List[Dict[str, Any]]) -> List[str]:
         """
         Generate patterns from template definitions.
-        
+
         Args:
             templates: List of template dicts with 'pattern' and variables
-            
+
         Returns:
             List of generated patterns
         """
@@ -107,21 +107,16 @@ class ConfigParser:
 
             # Extract variables (all keys except 'pattern')
             template_variables = {k: v for k, v in template_def.items() if k != "pattern"}
-            
+
             # Merge global variables with template-specific variables
             # Template variables override global ones
             merged_variables = {**self.global_variables, **template_variables}
 
             # Create temporary template engine
             temp_engine = TemplateEngine()
-            temp_engine.load_templates({
-                "templates": {
-                    "temp": {
-                        "pattern": pattern,
-                        "variables": merged_variables
-                    }
-                }
-            })
+            temp_engine.load_templates(
+                {"templates": {"temp": {"pattern": pattern, "variables": merged_variables}}}
+            )
 
             patterns = temp_engine.generate_patterns("temp")
             all_patterns.extend(patterns)
@@ -131,14 +126,13 @@ class ConfigParser:
     def generate_patterns_from_logic(self, logic: Dict[str, Any]) -> List[str]:
         """
         Generate patterns from logic rules.
-        
+
         Args:
             logic: Logic configuration dict
-            
+
         Returns:
             List of generated patterns
         """
-        logic_type = logic.get("type", "OR")
         conditions = logic.get("conditions", [])
 
         all_patterns = []
@@ -158,11 +152,11 @@ class ConfigParser:
     def generate_patterns(self, rule_config: RuleConfig, use_synonyms: bool = True) -> List[str]:
         """
         Generate all patterns for a rule configuration.
-        
+
         Args:
             rule_config: Parsed rule configuration
             use_synonyms: Whether to expand with synonyms
-            
+
         Returns:
             List of generated patterns
         """
@@ -191,31 +185,27 @@ class ConfigParser:
             all_patterns = self.pattern_expander.expand_all(all_patterns, use_synonyms=True)
 
         # Deduplicate and lowercase
-        unique_patterns = list(set(p.lower() for p in all_patterns))
+        unique_patterns = list({p.lower() for p in all_patterns})
 
         return unique_patterns
 
     def generate_all_patterns(
-        self,
-        yaml_path: str,
-        use_synonyms: bool = True,
-        use_cache: bool = True,
-        force: bool = False
+        self, yaml_path: str, use_synonyms: bool = True, use_cache: bool = True, force: bool = False
     ) -> Dict[str, List[str]]:
         """
         Generate patterns for all rules in configuration.
-        
+
         Args:
             yaml_path: Path to YAML configuration
             use_synonyms: Whether to expand with synonyms
             use_cache: Whether to use caching
             force: Force regeneration even if cached
-            
+
         Returns:
             Dict mapping rule names to pattern lists
         """
         # Read YAML content for hashing
-        with open(yaml_path, 'r', encoding='utf-8') as f:
+        with open(yaml_path, "r", encoding="utf-8") as f:
             yaml_content = f.read()
 
         # Use cache if enabled
@@ -252,38 +242,32 @@ class ConfigParser:
             metadata = {
                 "rule_count": len(results),
                 "yaml_file": yaml_path,
-                "use_synonyms": use_synonyms
+                "use_synonyms": use_synonyms,
             }
             cache.save(rule_hash, list(set(all_patterns)), metadata)
 
         return results
 
     def generate_shadow_ban_config(
-        self,
-        yaml_path: str,
-        use_synonyms: bool = True
+        self, yaml_path: str, use_synonyms: bool = True
     ) -> Dict[str, Any]:
         """
         Generate configuration for ShadowBanProcessor.
-        
+
         Args:
             yaml_path: Path to YAML configuration
             use_synonyms: Whether to expand with synonyms
-            
+
         Returns:
             Dict with 'phrases_by_level' and 'penalties'
         """
         rule_configs = self.parse_file(yaml_path)
 
-        phrases_by_level = {
-            "high": [],
-            "medium": [],
-            "low": []
-        }
+        phrases_by_level: Dict[str, List[str]] = {"high": [], "medium": [], "low": []}
 
         penalties = {}
 
-        for name, config in rule_configs.items():
+        for _name, config in rule_configs.items():
             patterns = self.generate_patterns(config, use_synonyms)
 
             severity = config.severity.lower()
@@ -292,30 +276,24 @@ class ConfigParser:
 
             penalties[severity] = config.penalty
 
-        return {
-            "phrases_by_level": phrases_by_level,
-            "penalties": penalties
-        }
+        return {"phrases_by_level": phrases_by_level, "penalties": penalties}
 
     def __repr__(self):
         return "ConfigParser()"
 
 
 def load_rules_from_yaml(
-    yaml_path: str,
-    use_synonyms: bool = True,
-    use_cache: bool = True,
-    force: bool = False
+    yaml_path: str, use_synonyms: bool = True, use_cache: bool = True, force: bool = False
 ) -> List[str]:
     """
     Convenience function to load rules from YAML.
-    
+
     Args:
         yaml_path: Path to YAML configuration
         use_synonyms: Whether to expand with synonyms
         use_cache: Whether to use caching
         force: Force regeneration
-        
+
     Returns:
         Flat list of all generated patterns
     """
@@ -328,4 +306,3 @@ def load_rules_from_yaml(
         all_patterns.extend(patterns)
 
     return list(set(all_patterns))
-

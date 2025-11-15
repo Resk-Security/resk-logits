@@ -38,10 +38,7 @@ def test_shadow_ban_processor():
     banned_phrases = ["bad word"]
 
     processor = ShadowBanProcessor(
-        tokenizer=tokenizer,
-        banned_phrases=banned_phrases,
-        shadow_penalty=-10.0,
-        device="cpu"
+        tokenizer=tokenizer, banned_phrases=banned_phrases, shadow_penalty=-10.0, device="cpu"
     )
 
     # Test call
@@ -63,25 +60,20 @@ def test_multi_level_processor():
     from resklogits import MultiLevelShadowBanProcessor
 
     tokenizer = AutoTokenizer.from_pretrained("gpt2")
-    phrases_by_level = {
-        'high': ['very bad'],
-        'medium': ['somewhat bad'],
-        'low': ['slightly bad']
-    }
+    phrases_by_level = {"high": ["very bad"], "medium": ["somewhat bad"], "low": ["slightly bad"]}
 
     processor = MultiLevelShadowBanProcessor(
         tokenizer=tokenizer,
         banned_phrases_by_level=phrases_by_level,
-        penalties={'high': -20.0, 'medium': -10.0, 'low': -5.0},
-        device="cpu"
+        penalties={"high": -20.0, "medium": -10.0, "low": -5.0},
+        device="cpu",
     )
 
     assert len(processor.automatons) == 3
-    assert 'high' in processor.automatons
-    assert 'medium' in processor.automatons
-    assert 'low' in processor.automatons
+    assert "high" in processor.automatons
+    assert "medium" in processor.automatons
+    assert "low" in processor.automatons
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

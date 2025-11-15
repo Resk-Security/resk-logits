@@ -20,15 +20,12 @@ def cmd_generate(args):
     try:
         parser = ConfigParser()
         results = parser.generate_all_patterns(
-            args.rules,
-            use_synonyms=args.synonyms,
-            use_cache=not args.no_cache,
-            force=args.force
+            args.rules, use_synonyms=args.synonyms, use_cache=not args.no_cache, force=args.force
         )
 
         # Flatten patterns
         all_patterns = []
-        for rule_name, patterns in results.items():
+        for _rule_name, patterns in results.items():
             all_patterns.extend(patterns)
 
         unique_patterns = list(set(all_patterns))
@@ -38,7 +35,7 @@ def cmd_generate(args):
         if args.output:
             # Save to JSON
             output_path = Path(args.output)
-            with open(output_path, 'w', encoding='utf-8') as f:
+            with open(output_path, "w", encoding="utf-8") as f:
                 if args.by_category:
                     json.dump(results, f, indent=2)
                 else:
@@ -49,7 +46,7 @@ def cmd_generate(args):
             if args.by_category:
                 print(json.dumps(results, indent=2))
             else:
-                for pattern in sorted(unique_patterns)[:args.preview]:
+                for pattern in sorted(unique_patterns)[: args.preview]:
                     print(f"  - {pattern}")
                 if len(unique_patterns) > args.preview:
                     print(f"  ... and {len(unique_patterns) - args.preview} more")
@@ -60,6 +57,7 @@ def cmd_generate(args):
         print(f"✗ Error: {e}", file=sys.stderr)
         if args.verbose:
             import traceback
+
             traceback.print_exc()
         return 1
 
@@ -67,7 +65,7 @@ def cmd_generate(args):
 def cmd_test(args):
     """Test rule matching against text."""
     print(f"Testing rules from: {args.rules}")
-    print(f"Test text: \"{args.text}\"")
+    print(f'Test text: "{args.text}"')
     print()
 
     try:
@@ -106,7 +104,7 @@ def cmd_expand(args):
         patterns = parser.generate_patterns(rule_config, use_synonyms=not args.no_synonyms)
 
         print(f"✓ Generated {len(patterns)} patterns:")
-        for pattern in sorted(patterns)[:args.preview]:
+        for pattern in sorted(patterns)[: args.preview]:
             print(f"  - {pattern}")
         if len(patterns) > args.preview:
             print(f"  ... and {len(patterns) - args.preview} more")
@@ -130,10 +128,12 @@ def cmd_cache_status(args):
     print(f"  Size: {stats['cache_size_mb']:.2f} MB")
     print()
 
-    if args.verbose and stats['total_entries'] > 0:
+    if args.verbose and stats["total_entries"] > 0:
         print("Entries:")
         for entry in cache.list_entries()[:10]:
-            print(f"  {entry['hash']}: {entry['pattern_count']} patterns (accessed: {entry['last_accessed_str']})")
+            print(
+                f"  {entry['hash']}: {entry['pattern_count']} patterns (accessed: {entry['last_accessed_str']})"
+            )
 
     return 0
 
@@ -147,7 +147,10 @@ def cmd_cache_clear(args):
         print(f"✓ Cleared cache entry: {args.hash}")
     else:
         stats = cache.get_stats()
-        if args.yes or input(f"Clear all {stats['total_entries']} cache entries? (y/N): ").lower() == 'y':
+        if (
+            args.yes
+            or input(f"Clear all {stats['total_entries']} cache entries? (y/N): ").lower() == "y"
+        ):
             cache.clear()
             print("✓ Cache cleared")
         else:
@@ -174,7 +177,7 @@ def cmd_cache_show(args):
 
         if args.show_patterns:
             print("\n  Patterns:")
-            for pattern in patterns[:args.limit]:
+            for pattern in patterns[: args.limit]:
                 print(f"    - {pattern}")
             if len(patterns) > args.limit:
                 print(f"    ... and {len(patterns) - args.limit} more")
@@ -211,57 +214,69 @@ def main():
     """Main CLI entry point."""
     parser = argparse.ArgumentParser(
         description="ReskLogits Rule Generator CLI",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
-    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
 
     # Generate command
-    gen_parser = subparsers.add_parser('generate', help='Generate patterns from rules')
-    gen_parser.add_argument('rules', help='Path to YAML rules file')
-    gen_parser.add_argument('-o', '--output', help='Output file (JSON)')
-    gen_parser.add_argument('--no-synonyms', action='store_true', help='Disable synonym expansion')
-    gen_parser.add_argument('--no-cache', action='store_true', help='Disable caching')
-    gen_parser.add_argument('--force', action='store_true', help='Force regeneration')
-    gen_parser.add_argument('--by-category', action='store_true', help='Group output by rule category')
-    gen_parser.add_argument('--preview', type=int, default=20, help='Number of patterns to preview')
-    gen_parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    gen_parser = subparsers.add_parser("generate", help="Generate patterns from rules")
+    gen_parser.add_argument("rules", help="Path to YAML rules file")
+    gen_parser.add_argument("-o", "--output", help="Output file (JSON)")
+    gen_parser.add_argument("--no-synonyms", action="store_true", help="Disable synonym expansion")
+    gen_parser.add_argument("--no-cache", action="store_true", help="Disable caching")
+    gen_parser.add_argument("--force", action="store_true", help="Force regeneration")
+    gen_parser.add_argument(
+        "--by-category", action="store_true", help="Group output by rule category"
+    )
+    gen_parser.add_argument("--preview", type=int, default=20, help="Number of patterns to preview")
+    gen_parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
 
     # Test command
-    test_parser = subparsers.add_parser('test', help='Test rule matching')
-    test_parser.add_argument('rules', help='Path to YAML rules file')
-    test_parser.add_argument('--text', required=True, help='Text to test against')
-    test_parser.add_argument('--no-cache', action='store_true', help='Disable caching')
+    test_parser = subparsers.add_parser("test", help="Test rule matching")
+    test_parser.add_argument("rules", help="Path to YAML rules file")
+    test_parser.add_argument("--text", required=True, help="Text to test against")
+    test_parser.add_argument("--no-cache", action="store_true", help="Disable caching")
 
     # Expand command
-    expand_parser = subparsers.add_parser('expand', help='Expand and preview a specific rule')
-    expand_parser.add_argument('rules', help='Path to YAML rules file')
-    expand_parser.add_argument('--rule', required=True, help='Rule name to expand')
-    expand_parser.add_argument('--no-synonyms', action='store_true', help='Disable synonym expansion')
-    expand_parser.add_argument('--preview', type=int, default=50, help='Number of patterns to show')
+    expand_parser = subparsers.add_parser("expand", help="Expand and preview a specific rule")
+    expand_parser.add_argument("rules", help="Path to YAML rules file")
+    expand_parser.add_argument("--rule", required=True, help="Rule name to expand")
+    expand_parser.add_argument(
+        "--no-synonyms", action="store_true", help="Disable synonym expansion"
+    )
+    expand_parser.add_argument("--preview", type=int, default=50, help="Number of patterns to show")
 
     # Cache subcommands
-    cache_parser = subparsers.add_parser('cache', help='Cache management')
-    cache_subparsers = cache_parser.add_subparsers(dest='cache_command')
+    cache_parser = subparsers.add_parser("cache", help="Cache management")
+    cache_subparsers = cache_parser.add_subparsers(dest="cache_command")
 
-    cache_status_parser = cache_subparsers.add_parser('status', help='Show cache status')
-    cache_status_parser.add_argument('--cache-dir', default='.resklogits_cache', help='Cache directory')
-    cache_status_parser.add_argument('-v', '--verbose', action='store_true', help='Show detailed info')
+    cache_status_parser = cache_subparsers.add_parser("status", help="Show cache status")
+    cache_status_parser.add_argument(
+        "--cache-dir", default=".resklogits_cache", help="Cache directory"
+    )
+    cache_status_parser.add_argument(
+        "-v", "--verbose", action="store_true", help="Show detailed info"
+    )
 
-    cache_clear_parser = cache_subparsers.add_parser('clear', help='Clear cache')
-    cache_clear_parser.add_argument('--cache-dir', default='.resklogits_cache', help='Cache directory')
-    cache_clear_parser.add_argument('--hash', help='Clear specific entry')
-    cache_clear_parser.add_argument('-y', '--yes', action='store_true', help='Skip confirmation')
+    cache_clear_parser = cache_subparsers.add_parser("clear", help="Clear cache")
+    cache_clear_parser.add_argument(
+        "--cache-dir", default=".resklogits_cache", help="Cache directory"
+    )
+    cache_clear_parser.add_argument("--hash", help="Clear specific entry")
+    cache_clear_parser.add_argument("-y", "--yes", action="store_true", help="Skip confirmation")
 
-    cache_show_parser = cache_subparsers.add_parser('show', help='Show cache entry')
-    cache_show_parser.add_argument('hash', help='Cache entry hash')
-    cache_show_parser.add_argument('--cache-dir', default='.resklogits_cache', help='Cache directory')
-    cache_show_parser.add_argument('--show-patterns', action='store_true', help='Show patterns')
-    cache_show_parser.add_argument('--limit', type=int, default=20, help='Pattern limit')
+    cache_show_parser = cache_subparsers.add_parser("show", help="Show cache entry")
+    cache_show_parser.add_argument("hash", help="Cache entry hash")
+    cache_show_parser.add_argument(
+        "--cache-dir", default=".resklogits_cache", help="Cache directory"
+    )
+    cache_show_parser.add_argument("--show-patterns", action="store_true", help="Show patterns")
+    cache_show_parser.add_argument("--limit", type=int, default=20, help="Pattern limit")
 
     # Validate command
-    validate_parser = subparsers.add_parser('validate', help='Validate YAML rules file')
-    validate_parser.add_argument('rules', help='Path to YAML rules file')
+    validate_parser = subparsers.add_parser("validate", help="Validate YAML rules file")
+    validate_parser.add_argument("rules", help="Path to YAML rules file")
 
     args = parser.parse_args()
 
@@ -270,28 +285,27 @@ def main():
         return 1
 
     # Execute command
-    if args.command == 'generate':
+    if args.command == "generate":
         return cmd_generate(args)
-    elif args.command == 'test':
+    elif args.command == "test":
         return cmd_test(args)
-    elif args.command == 'expand':
+    elif args.command == "expand":
         return cmd_expand(args)
-    elif args.command == 'cache':
-        if args.cache_command == 'status':
+    elif args.command == "cache":
+        if args.cache_command == "status":
             return cmd_cache_status(args)
-        elif args.cache_command == 'clear':
+        elif args.cache_command == "clear":
             return cmd_cache_clear(args)
-        elif args.cache_command == 'show':
+        elif args.cache_command == "show":
             return cmd_cache_show(args)
         else:
             cache_parser.print_help()
             return 1
-    elif args.command == 'validate':
+    elif args.command == "validate":
         return cmd_validate(args)
 
     return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())
-

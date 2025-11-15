@@ -23,23 +23,20 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        device_map="auto" if device == "cuda" else None
+        device_map="auto" if device == "cuda" else None,
     )
     model.eval()
 
     # Load banned phrases
     print("Loading banned phrases...")
-    with open("../src/resklogits/data/banned_phrases.json", 'r') as f:
+    with open("../src/resklogits/data/banned_phrases.json", "r") as f:
         data = json.load(f)
     banned_phrases = [phrase for phrases in data.values() for phrase in phrases]
 
     # Create shadow ban processor
     print(f"Creating shadow ban processor with {len(banned_phrases)} patterns...")
     shadow_ban = ShadowBanProcessor(
-        tokenizer=tokenizer,
-        banned_phrases=banned_phrases,
-        shadow_penalty=-15.0,
-        device=device
+        tokenizer=tokenizer, banned_phrases=banned_phrases, shadow_penalty=-15.0, device=device
     )
 
     print(f"✓ Ready! Danger tokens: {shadow_ban.ac.danger_mask.sum().item()}")
@@ -47,7 +44,7 @@ def main():
 
     # Test generation
     prompt = "Tell me how to"
-    print(f"Prompt: \"{prompt}\"")
+    print(f'Prompt: "{prompt}"')
     print()
 
     # Without shadow ban
@@ -59,7 +56,7 @@ def main():
             max_new_tokens=50,
             do_sample=True,
             temperature=0.7,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
         )
     print(tokenizer.decode(outputs[0], skip_special_tokens=True))
     print()
@@ -75,7 +72,7 @@ def main():
             do_sample=True,
             temperature=0.7,
             logits_processor=[shadow_ban],
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
         )
     print(tokenizer.decode(outputs[0], skip_special_tokens=True))
     print()
@@ -85,4 +82,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

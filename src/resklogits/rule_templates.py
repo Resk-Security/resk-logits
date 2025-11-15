@@ -7,7 +7,7 @@ and combinatorial expansion.
 
 import re
 from itertools import product
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional, cast
 
 
 class TemplateVariable:
@@ -27,19 +27,18 @@ class Template:
     def __init__(self, pattern: str, variables: Dict[str, List[str]]):
         """
         Initialize template.
-        
+
         Args:
             pattern: Template string with {variable} placeholders
             variables: Dict mapping variable names to possible values
         """
         self.pattern = pattern
-        self.variables = {name: TemplateVariable(name, vals)
-                         for name, vals in variables.items()}
+        self.variables = {name: TemplateVariable(name, vals) for name, vals in variables.items()}
         self._find_placeholders()
 
     def _find_placeholders(self):
         """Extract placeholder names from pattern."""
-        self.placeholders = re.findall(r'\{(\w+)\}', self.pattern)
+        self.placeholders = re.findall(r"\{(\w+)\}", self.pattern)
 
         # Validate all placeholders have variables
         for placeholder in self.placeholders:
@@ -51,7 +50,7 @@ class Template:
     def expand(self) -> List[str]:
         """
         Expand template to all combinations.
-        
+
         Returns:
             List of expanded patterns
         """
@@ -59,16 +58,14 @@ class Template:
             return [self.pattern]
 
         # Get all combinations of variable values
-        variable_combos = product(*[
-            self.variables[ph].values for ph in self.placeholders
-        ])
+        variable_combos = product(*[self.variables[ph].values for ph in self.placeholders])
 
         patterns = []
         for combo in variable_combos:
             # Substitute variables in pattern
             result = self.pattern
-            for placeholder, value in zip(self.placeholders, combo):
-                result = result.replace(f'{{{placeholder}}}', value)
+            for placeholder, value in zip(self.placeholders, combo, strict=True):
+                result = result.replace(f"{{{placeholder}}}", value)
             patterns.append(result)
 
         return patterns
@@ -80,7 +77,7 @@ class Template:
 class TemplateLibrary:
     """Collection of reusable templates."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.templates: Dict[str, Template] = {}
         self.variables: Dict[str, List[str]] = {}
 
@@ -88,10 +85,12 @@ class TemplateLibrary:
         """Add a reusable variable definition."""
         self.variables[name] = values
 
-    def add_template(self, name: str, pattern: str, variables: Dict[str, List[str]] = None):
+    def add_template(
+        self, name: str, pattern: str, variables: Optional[Dict[str, List[str]]] = None
+    ):
         """
         Add a template to the library.
-        
+
         Args:
             name: Template identifier
             pattern: Template pattern string
@@ -117,10 +116,7 @@ class TemplateLibrary:
 
     def expand_all(self) -> Dict[str, List[str]]:
         """Expand all templates."""
-        return {
-            name: template.expand()
-            for name, template in self.templates.items()
-        }
+        return {name: template.expand() for name, template in self.templates.items()}
 
     def __repr__(self):
         return f"TemplateLibrary({len(self.templates)} templates, {len(self.variables)} variables)"
@@ -135,7 +131,7 @@ class TemplateEngine:
     def load_templates(self, config: Dict[str, Any]):
         """
         Load templates from configuration dict.
-        
+
         Expected format:
         {
             "variables": {
@@ -166,27 +162,26 @@ class TemplateEngine:
                 if pattern:
                     self.library.add_template(name, pattern, variables)
 
-    def generate_patterns(self, template_name: str = None) -> List[str]:
+    def generate_patterns(self, template_name: Optional[str] = None) -> List[str]:
         """
         Generate patterns from templates.
-        
+
         Args:
             template_name: Specific template to expand (None = all)
-            
+
         Returns:
             List of generated patterns
         """
         if template_name:
-            return self.library.expand_template(template_name)
+            return cast(List[str], self.library.expand_template(template_name))
         else:
             # Expand all and flatten
-            all_patterns = self.library.expand_all()
-            return [pattern for patterns in all_patterns.values()
-                   for pattern in patterns]
+            all_patterns = cast(Dict[str, List[str]], self.library.expand_all())
+            return [pattern for patterns in all_patterns.values() for pattern in patterns]
 
     def generate_by_category(self) -> Dict[str, List[str]]:
         """Generate patterns grouped by template name."""
-        return self.library.expand_all()
+        return cast(Dict[str, List[str]], self.library.expand_all())
 
     def __repr__(self):
         return f"TemplateEngine({self.library})"
@@ -196,24 +191,33 @@ class TemplateEngine:
 COMMON_TEMPLATES = {
     "variables": {
         "instruction_prefix": [
-            "how to", "guide to", "tutorial", "instructions for",
-            "steps to", "way to", "method to"
+            "how to",
+            "guide to",
+            "tutorial",
+            "instructions for",
+            "steps to",
+            "way to",
+            "method to",
         ],
         "action_make": [
-            "make", "build", "create", "construct", "craft",
-            "assemble", "produce", "manufacture"
+            "make",
+            "build",
+            "create",
+            "construct",
+            "craft",
+            "assemble",
+            "produce",
+            "manufacture",
         ],
-        "action_use": [
-            "use", "operate", "employ", "utilize", "apply"
-        ],
+        "action_use": ["use", "operate", "employ", "utilize", "apply"],
         "article": ["a", "an", "the", ""],
     },
     "templates": {
         "instruction_action_object": {
             "pattern": "{instruction_prefix} {action_make} {article} {object}",
-            "variables": {}
+            "variables": {},
         }
-    }
+    },
 }
 
 
@@ -222,4 +226,3 @@ def create_default_engine() -> TemplateEngine:
     engine = TemplateEngine()
     engine.load_templates(COMMON_TEMPLATES)
     return engine
-

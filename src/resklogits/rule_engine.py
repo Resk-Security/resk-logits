@@ -7,11 +7,12 @@ and pattern matching capabilities.
 
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 class LogicOperator(Enum):
     """Logic operators for rule composition."""
+
     AND = "AND"
     OR = "OR"
     NOT = "NOT"
@@ -31,19 +32,19 @@ class Rule(ABC):
         """Generate patterns from this rule."""
         pass
 
-    def __and__(self, other: 'Rule') -> 'CompositeRule':
+    def __and__(self, other: "Rule") -> "CompositeRule":
         """Compose rules with AND operator."""
         return CompositeRule(LogicOperator.AND, [self, other])
 
-    def __or__(self, other: 'Rule') -> 'CompositeRule':
+    def __or__(self, other: "Rule") -> "CompositeRule":
         """Compose rules with OR operator."""
         return CompositeRule(LogicOperator.OR, [self, other])
 
-    def __invert__(self) -> 'CompositeRule':
+    def __invert__(self) -> "CompositeRule":
         """Negate rule with NOT operator."""
         return CompositeRule(LogicOperator.NOT, [self])
 
-    def __xor__(self, other: 'Rule') -> 'CompositeRule':
+    def __xor__(self, other: "Rule") -> "CompositeRule":
         """Compose rules with XOR operator."""
         return CompositeRule(LogicOperator.XOR, [self, other])
 
@@ -185,20 +186,20 @@ class CombinationRule(Rule):
         self.name = name
         self.components: Dict[str, List[str]] = {}
 
-    def with_component(self, component_name: str, values: List[str]) -> 'CombinationRule':
+    def with_component(self, component_name: str, values: List[str]) -> "CombinationRule":
         """Add a component with possible values."""
         self.components[component_name] = values
         return self
 
-    def with_action(self, actions: List[str]) -> 'CombinationRule':
+    def with_action(self, actions: List[str]) -> "CombinationRule":
         """Convenience method for action component."""
         return self.with_component("action", actions)
 
-    def with_object(self, objects: List[str]) -> 'CombinationRule':
+    def with_object(self, objects: List[str]) -> "CombinationRule":
         """Convenience method for object component."""
         return self.with_component("object", objects)
 
-    def with_prefix(self, prefixes: List[str]) -> 'CombinationRule':
+    def with_prefix(self, prefixes: List[str]) -> "CombinationRule":
         """Convenience method for prefix component."""
         return self.with_component("prefix", prefixes)
 
@@ -238,7 +239,7 @@ class CombinationRule(Rule):
 class RuleEngine:
     """Engine for managing and evaluating rules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: Dict[str, Rule] = {}
 
     def add_rule(self, name: str, rule: Rule):
@@ -256,13 +257,13 @@ class RuleEngine:
         rule = self.get_rule(name)
         return rule.matches(text)
 
-    def generate_patterns(self, name: str = None) -> List[str]:
+    def generate_patterns(self, name: Optional[str] = None) -> List[str]:
         """
         Generate patterns from rules.
-        
+
         Args:
             name: Specific rule name (None = all rules)
-            
+
         Returns:
             List of generated patterns
         """
@@ -279,7 +280,7 @@ class RuleEngine:
     def load_from_config(self, config: Dict[str, Any]):
         """
         Load rules from configuration dict.
-        
+
         Expected format:
         {
             "rule_name": {
@@ -292,6 +293,7 @@ class RuleEngine:
             rule_type = rule_config.get("type", "exact")
             values = rule_config.get("values", [])
 
+            rule: Rule
             if rule_type == "exact":
                 rule = ExactRule(values)
             elif rule_type == "starts_with":
@@ -307,4 +309,3 @@ class RuleEngine:
 
     def __repr__(self):
         return f"RuleEngine({len(self.rules)} rules)"
-

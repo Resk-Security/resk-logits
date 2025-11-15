@@ -30,11 +30,7 @@ def main():
     print("-" * 80)
 
     parser = ConfigParser()
-    results = parser.generate_all_patterns(
-        str(rules_file),
-        use_synonyms=True,
-        use_cache=True
-    )
+    results = parser.generate_all_patterns(str(rules_file), use_synonyms=True, use_cache=True)
 
     print(f"[OK] Generated patterns from {len(results)} rules:")
     for rule_name, patterns in results.items():
@@ -118,12 +114,16 @@ def main():
 
     output_file = Path(__file__).parent / "generated_patterns.json"
 
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump({
-            "patterns": sorted(set(all_patterns)),
-            "count": len(set(all_patterns)),
-            "rules": list(results.keys())
-        }, f, indent=2)
+    with open(output_file, "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "patterns": sorted(set(all_patterns)),
+                "count": len(set(all_patterns)),
+                "rules": list(results.keys()),
+            },
+            f,
+            indent=2,
+        )
 
     print(f"[OK] Saved patterns to: {output_file}")
     print()
@@ -142,4 +142,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

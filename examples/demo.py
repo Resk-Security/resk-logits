@@ -19,7 +19,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 def load_banned_phrases(json_path: str = "../src/resklogits/data/banned_phrases.json") -> list:
     """Load all banned phrases from JSON file."""
-    with open(json_path, 'r', encoding='utf-8') as f:
+    with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Flatten all categories into single list
@@ -31,41 +31,52 @@ def load_banned_phrases(json_path: str = "../src/resklogits/data/banned_phrases.
     return all_phrases
 
 
-def load_banned_phrases_by_level(json_path: str = "../src/resklogits/data/banned_phrases.json") -> dict:
+def load_banned_phrases_by_level(
+    json_path: str = "../src/resklogits/data/banned_phrases.json",
+) -> dict:
     """Load banned phrases organized by severity level."""
-    with open(json_path, 'r', encoding='utf-8') as f:
+    with open(json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     # Organize by severity
-    by_level = {
-        'high': [],
-        'medium': [],
-        'low': []
-    }
+    by_level = {"high": [], "medium": [], "low": []}
 
     # High severity: violence, exploitation, hate speech
-    high_categories = ['violence', 'self_harm', 'sexual_exploitation',
-                      'hate_speech', 'extremism', 'body_disposal']
+    high_categories = [
+        "violence",
+        "self_harm",
+        "sexual_exploitation",
+        "hate_speech",
+        "extremism",
+        "body_disposal",
+    ]
 
     # Medium severity: hacking, fraud, drugs
-    medium_categories = ['exploit_commands', 'fraud', 'drugs',
-                        'additional_hacking', 'additional_fraud_scams',
-                        'additional_drugs_chemicals', 'additional_weapons']
+    medium_categories = [
+        "exploit_commands",
+        "fraud",
+        "drugs",
+        "additional_hacking",
+        "additional_fraud_scams",
+        "additional_drugs_chemicals",
+        "additional_weapons",
+    ]
 
     # Low severity: jailbreaks, misinformation
-    low_categories = ['jailbreak_attempts', 'misinformation',
-                     'privacy_violation', 'manipulation']
+    low_categories = ["jailbreak_attempts", "misinformation", "privacy_violation", "manipulation"]
 
     for category, phrases in data.items():
         if category in high_categories:
-            by_level['high'].extend(phrases)
+            by_level["high"].extend(phrases)
         elif category in medium_categories:
-            by_level['medium'].extend(phrases)
+            by_level["medium"].extend(phrases)
         else:
-            by_level['low'].extend(phrases)
+            by_level["low"].extend(phrases)
 
-    print(f"Organized by level: High={len(by_level['high'])}, "
-          f"Medium={len(by_level['medium'])}, Low={len(by_level['low'])}")
+    print(
+        f"Organized by level: High={len(by_level['high'])}, "
+        f"Medium={len(by_level['medium'])}, Low={len(by_level['low'])}"
+    )
 
     return by_level
 
@@ -84,7 +95,7 @@ def test_generation(model, tokenizer, prompt, logits_processor=None, max_tokens=
             temperature=0.7,
             top_p=0.9,
             logits_processor=[logits_processor] if logits_processor else None,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
         )
 
     generation_time = time.time() - start_time
@@ -100,8 +111,8 @@ def benchmark_processor(processor, tokenizer, num_iterations=100):
     seq_len = 10
 
     # Create dummy inputs
-    dummy_input_ids = torch.randint(0, vocab_size, (batch_size, seq_len), device='cuda')
-    dummy_scores = torch.randn(batch_size, vocab_size, device='cuda')
+    dummy_input_ids = torch.randint(0, vocab_size, (batch_size, seq_len), device="cuda")
+    dummy_scores = torch.randn(batch_size, vocab_size, device="cuda")
 
     # Warmup
     for _ in range(10):
@@ -145,7 +156,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        device_map="auto" if device == "cuda" else None
+        device_map="auto" if device == "cuda" else None,
     )
 
     if device == "cpu":
@@ -169,10 +180,7 @@ def main():
 
     start_time = time.time()
     shadow_ban = ShadowBanProcessor(
-        tokenizer=tokenizer,
-        banned_phrases=banned_phrases,
-        shadow_penalty=-15.0,
-        device=device
+        tokenizer=tokenizer, banned_phrases=banned_phrases, shadow_penalty=-15.0, device=device
     )
     build_time = time.time() - start_time
 
@@ -210,7 +218,7 @@ def main():
 
     for i, prompt in enumerate(test_prompts, 1):
         print(f"Test {i}/{len(test_prompts)}")
-        print(f"Prompt: \"{prompt}\"")
+        print(f'Prompt: "{prompt}"')
         print("-" * 80)
 
         # Generate without shadow ban
@@ -250,8 +258,8 @@ def main():
     multi_level_ban = MultiLevelShadowBanProcessor(
         tokenizer=tokenizer,
         banned_phrases_by_level=phrases_by_level,
-        penalties={'high': -20.0, 'medium': -10.0, 'low': -5.0},
-        device=device
+        penalties={"high": -20.0, "medium": -10.0, "low": -5.0},
+        device=device,
     )
     print(f"✓ Created with {len(multi_level_ban.automatons)} levels")
     print()
@@ -262,7 +270,7 @@ def main():
     text_tiered, time_tiered = test_generation(
         model, tokenizer, test_prompt, logits_processor=multi_level_ban, max_tokens=30
     )
-    print(f"Prompt: \"{test_prompt}\"")
+    print(f'Prompt: "{test_prompt}"')
     print(f"Result: {text_tiered}")
     print(f"Time: {time_tiered:.3f}s")
     print()
@@ -286,4 +294,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

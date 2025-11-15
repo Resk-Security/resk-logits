@@ -9,13 +9,13 @@ import json
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 
 class RuleCache:
     """
     Hash-based cache for generated patterns.
-    
+
     Cache structure:
     .resklogits_cache/
     ├── index.json              # Cache metadata index
@@ -33,26 +33,26 @@ class RuleCache:
     def _load_index(self) -> Dict[str, Any]:
         """Load cache index from disk."""
         if self.index_file.exists():
-            with open(self.index_file, 'r', encoding='utf-8') as f:
-                return json.load(f)
+            with open(self.index_file, "r", encoding="utf-8") as f:
+                return cast(Dict[str, Any], json.load(f))
         return {"entries": {}, "version": "1.0"}
 
     def _save_index(self):
         """Save cache index to disk."""
-        with open(self.index_file, 'w', encoding='utf-8') as f:
+        with open(self.index_file, "w", encoding="utf-8") as f:
             json.dump(self.index, f, indent=2)
 
     def compute_hash(self, content: str) -> str:
         """
         Compute SHA256 hash of content.
-        
+
         Args:
             content: Content to hash (usually YAML rules)
-            
+
         Returns:
             Hex hash string
         """
-        return hashlib.sha256(content.encode('utf-8')).hexdigest()[:16]
+        return hashlib.sha256(content.encode("utf-8")).hexdigest()[:16]
 
     def exists(self, rule_hash: str) -> bool:
         """Check if cache entry exists for given hash."""
@@ -62,13 +62,13 @@ class RuleCache:
     def load(self, rule_hash: str) -> List[str]:
         """
         Load patterns from cache.
-        
+
         Args:
             rule_hash: Hash of rules
-            
+
         Returns:
             List of cached patterns
-            
+
         Raises:
             FileNotFoundError: If cache entry doesn't exist
         """
@@ -77,7 +77,7 @@ class RuleCache:
         if not pattern_file.exists():
             raise FileNotFoundError(f"Cache entry not found: {rule_hash}")
 
-        with open(pattern_file, 'r', encoding='utf-8') as f:
+        with open(pattern_file, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # Update access time in index
@@ -85,12 +85,12 @@ class RuleCache:
             self.index["entries"][rule_hash]["last_accessed"] = time.time()
             self._save_index()
 
-        return data.get("patterns", [])
+        return cast(List[str], data.get("patterns", []))
 
-    def save(self, rule_hash: str, patterns: List[str], metadata: Dict[str, Any] = None):
+    def save(self, rule_hash: str, patterns: List[str], metadata: Optional[Dict[str, Any]] = None):
         """
         Save patterns to cache.
-        
+
         Args:
             rule_hash: Hash of rules
             patterns: Generated patterns
@@ -98,17 +98,15 @@ class RuleCache:
         """
         # Save patterns
         pattern_file = self.cache_dir / f"{rule_hash}_patterns.json"
-        with open(pattern_file, 'w', encoding='utf-8') as f:
-            json.dump({
-                "patterns": patterns,
-                "count": len(patterns),
-                "created": time.time()
-            }, f, indent=2)
+        with open(pattern_file, "w", encoding="utf-8") as f:
+            json.dump(
+                {"patterns": patterns, "count": len(patterns), "created": time.time()}, f, indent=2
+            )
 
         # Save metadata
         if metadata:
             meta_file = self.cache_dir / f"{rule_hash}_meta.json"
-            with open(meta_file, 'w', encoding='utf-8') as f:
+            with open(meta_file, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2)
 
         # Update index
@@ -116,7 +114,7 @@ class RuleCache:
             "created": time.time(),
             "last_accessed": time.time(),
             "pattern_count": len(patterns),
-            "has_metadata": metadata is not None
+            "has_metadata": metadata is not None,
         }
         self._save_index()
 
@@ -127,8 +125,8 @@ class RuleCache:
         if not meta_file.exists():
             return None
 
-        with open(meta_file, 'r', encoding='utf-8') as f:
-            return json.load(f)
+        with open(meta_file, "r", encoding="utf-8") as f:
+            return cast(Optional[Dict[str, Any]], json.load(f))
 
     def list_entries(self) -> List[Dict[str, Any]]:
         """List all cache entries with metadata."""
@@ -138,7 +136,7 @@ class RuleCache:
                 "hash": hash_key,
                 **info,
                 "created_str": datetime.fromtimestamp(info["created"]).isoformat(),
-                "last_accessed_str": datetime.fromtimestamp(info["last_accessed"]).isoformat()
+                "last_accessed_str": datetime.fromtimestamp(info["last_accessed"]).isoformat(),
             }
             entries.append(entry)
 
@@ -149,7 +147,7 @@ class RuleCache:
     def clear(self, rule_hash: Optional[str] = None):
         """
         Clear cache entries.
-        
+
         Args:
             rule_hash: Specific hash to clear (None = clear all)
         """
@@ -181,8 +179,7 @@ class RuleCache:
         """Get cache statistics."""
         total_entries = len(self.index["entries"])
         total_patterns = sum(
-            entry.get("pattern_count", 0)
-            for entry in self.index["entries"].values()
+            entry.get("pattern_count", 0) for entry in self.index["entries"].values()
         )
 
         # Calculate total size
@@ -195,13 +192,13 @@ class RuleCache:
             "total_patterns": total_patterns,
             "cache_size_bytes": total_size,
             "cache_size_mb": total_size / (1024 * 1024),
-            "cache_dir": str(self.cache_dir)
+            "cache_dir": str(self.cache_dir),
         }
 
     def cleanup_old(self, max_age_days: int = 30):
         """
         Remove cache entries older than specified age.
-        
+
         Args:
             max_age_days: Maximum age in days
         """
@@ -225,10 +222,10 @@ class RuleCache:
 class CachedGenerator:
     """Wrapper that adds caching to any generator function."""
 
-    def __init__(self, generator_func, cache: RuleCache = None):
+    def __init__(self, generator_func, cache: Optional[RuleCache] = None):
         """
         Initialize cached generator.
-        
+
         Args:
             generator_func: Function that generates patterns
             cache: RuleCache instance (creates default if None)
@@ -239,12 +236,12 @@ class CachedGenerator:
     def generate(self, rules_content: str, force: bool = False, **kwargs) -> List[str]:
         """
         Generate patterns with caching.
-        
+
         Args:
             rules_content: Rule content to hash
             force: Force regeneration even if cached
             **kwargs: Additional arguments for generator function
-            
+
         Returns:
             Generated patterns
         """
@@ -256,13 +253,13 @@ class CachedGenerator:
             return self.cache.load(rule_hash)
 
         # Generate patterns
-        patterns = self.generator_func(rules_content, **kwargs)
+        patterns = cast(List[str], self.generator_func(rules_content, **kwargs))
 
         # Save to cache
         metadata = {
             "generator": self.generator_func.__name__,
             "kwargs": kwargs,
-            "timestamp": time.time()
+            "timestamp": time.time(),
         }
         self.cache.save(rule_hash, patterns, metadata)
 
@@ -270,4 +267,3 @@ class CachedGenerator:
 
     def __repr__(self):
         return f"CachedGenerator({self.generator_func.__name__}, {self.cache})"
-

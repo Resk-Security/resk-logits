@@ -7,13 +7,13 @@ and synonym expansion through graph traversal.
 
 from collections import defaultdict, deque
 from itertools import product
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 
 class SynonymGraph:
     """Graph structure for synonym relationships."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.graph: Dict[str, Set[str]] = defaultdict(set)
 
     def add_synonym(self, word1: str, word2: str):
@@ -24,17 +24,17 @@ class SynonymGraph:
     def add_synonym_group(self, words: List[str]):
         """Add a group of mutually synonymous words."""
         for i, word1 in enumerate(words):
-            for word2 in words[i+1:]:
+            for word2 in words[i + 1 :]:
                 self.add_synonym(word1, word2)
 
     def get_synonyms(self, word: str, max_depth: int = 1) -> Set[str]:
         """
         Get all synonyms of a word up to max depth.
-        
+
         Args:
             word: Source word
             max_depth: How many hops to traverse (1 = direct synonyms only)
-            
+
         Returns:
             Set of synonyms including the original word
         """
@@ -58,11 +58,11 @@ class SynonymGraph:
     def expand_phrase(self, phrase: str, max_depth: int = 1) -> List[str]:
         """
         Expand phrase by replacing words with synonyms.
-        
+
         Args:
             phrase: Input phrase
             max_depth: Synonym traversal depth
-            
+
         Returns:
             List of phrase variations
         """
@@ -83,11 +83,11 @@ class SynonymGraph:
 class PatternFSM:
     """Finite State Machine for pattern generation."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.states: Set[int] = {0}  # State 0 is start state
         self.transitions: Dict[int, Dict[str, int]] = defaultdict(dict)
         self.accepting: Set[int] = set()
-        self.state_counter = 1
+        self.state_counter: int = 1
 
     def add_state(self, accepting: bool = False) -> int:
         """Add a new state and return its ID."""
@@ -115,7 +115,7 @@ class PatternFSM:
                 current_state = self.transitions[current_state][token]
             else:
                 # Create new state and transition
-                is_final = (i == len(tokens) - 1)
+                is_final = i == len(tokens) - 1
                 next_state = self.add_state(accepting=is_final)
                 self.add_transition(current_state, next_state, token)
                 current_state = next_state
@@ -123,17 +123,17 @@ class PatternFSM:
     def generate_patterns(self, max_length: int = 10) -> List[str]:
         """
         Generate all patterns accepted by the FSM.
-        
+
         Args:
             max_length: Maximum pattern length (in tokens)
-            
+
         Returns:
             List of accepted patterns
         """
         patterns = []
 
         # BFS through state graph
-        queue = deque([(0, [])])  # (state, path)
+        queue: deque[Tuple[int, List[str]]] = deque([(0, [])])  # (state, path)
 
         while queue:
             state, path = queue.popleft()
@@ -159,13 +159,13 @@ class PatternFSM:
 class GrammarExpander:
     """Expands patterns using grammar rules."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.rules: Dict[str, List[List[str]]] = {}
 
     def add_rule(self, non_terminal: str, productions: List[List[str]]):
         """
         Add a grammar rule.
-        
+
         Args:
             non_terminal: Non-terminal symbol (e.g., "NP", "VP")
             productions: List of production rules (list of symbols)
@@ -175,14 +175,15 @@ class GrammarExpander:
     def expand(self, start_symbol: str, max_depth: int = 3) -> List[str]:
         """
         Expand a start symbol using grammar rules.
-        
+
         Args:
             start_symbol: Symbol to start expansion
             max_depth: Maximum recursion depth
-            
+
         Returns:
             List of terminal strings
         """
+
         def expand_recursive(symbol: str, depth: int) -> List[List[str]]:
             if depth > max_depth:
                 return [[symbol]]
@@ -244,11 +245,11 @@ class PatternExpander:
     def expand_all(self, base_patterns: List[str], use_synonyms: bool = True) -> List[str]:
         """
         Comprehensive pattern expansion.
-        
+
         Args:
             base_patterns: Initial patterns
             use_synonyms: Whether to apply synonym expansion
-            
+
         Returns:
             Expanded pattern list
         """
@@ -283,4 +284,3 @@ def create_default_expander() -> PatternExpander:
     expander = PatternExpander()
     expander.add_synonyms(DEFAULT_SYNONYMS)
     return expander
-

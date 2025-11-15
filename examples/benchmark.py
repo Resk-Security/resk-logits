@@ -22,10 +22,7 @@ def benchmark_build_time(tokenizer, phrases, device="cuda"):
     """Benchmark automaton construction time."""
     start = time.time()
     processor = ShadowBanProcessor(
-        tokenizer=tokenizer,
-        banned_phrases=phrases,
-        shadow_penalty=-15.0,
-        device=device
+        tokenizer=tokenizer, banned_phrases=phrases, shadow_penalty=-15.0, device=device
     )
     build_time = time.time() - start
     return processor, build_time
@@ -62,15 +59,14 @@ def benchmark_processing_overhead(processor, tokenizer, iterations=1000, device=
         avg_time_ms = (elapsed / iterations) * 1000
         throughput = (batch_size * iterations) / elapsed
 
-        results[batch_size] = {
-            'avg_time_ms': avg_time_ms,
-            'throughput': throughput
-        }
+        results[batch_size] = {"avg_time_ms": avg_time_ms, "throughput": throughput}
 
     return results
 
 
-def benchmark_generation_overhead(model, tokenizer, processor, prompts, max_tokens=50, device="cuda"):
+def benchmark_generation_overhead(
+    model, tokenizer, processor, prompts, max_tokens=50, device="cuda"
+):
     """Benchmark generation with/without processor."""
     results = []
 
@@ -84,7 +80,7 @@ def benchmark_generation_overhead(model, tokenizer, processor, prompts, max_toke
                 **inputs,
                 max_new_tokens=max_tokens,
                 do_sample=False,
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
             )
         time_without = time.time() - start
 
@@ -97,20 +93,22 @@ def benchmark_generation_overhead(model, tokenizer, processor, prompts, max_toke
                 max_new_tokens=max_tokens,
                 do_sample=False,
                 logits_processor=[processor],
-                pad_token_id=tokenizer.eos_token_id
+                pad_token_id=tokenizer.eos_token_id,
             )
         time_with = time.time() - start
 
         overhead_ms = (time_with - time_without) * 1000
         overhead_pct = ((time_with - time_without) / time_without * 100) if time_without > 0 else 0
 
-        results.append({
-            'prompt': prompt,
-            'time_without': time_without,
-            'time_with': time_with,
-            'overhead_ms': overhead_ms,
-            'overhead_pct': overhead_pct
-        })
+        results.append(
+            {
+                "prompt": prompt,
+                "time_without": time_without,
+                "time_with": time_with,
+                "overhead_ms": overhead_ms,
+                "overhead_pct": overhead_pct,
+            }
+        )
 
     return results
 
@@ -149,10 +147,10 @@ def benchmark_scaling(tokenizer, all_phrases, device="cuda"):
         process_time = (time.time() - start) / 100 * 1000
 
         results[count] = {
-            'build_time': build_time,
-            'process_time_ms': process_time,
-            'danger_tokens': processor.ac.danger_mask.sum().item(),
-            'states': len(processor.ac.trie)
+            "build_time": build_time,
+            "process_time_ms": process_time,
+            "danger_tokens": processor.ac.danger_mask.sum().item(),
+            "states": len(processor.ac.trie),
         }
 
         del processor
@@ -207,7 +205,7 @@ def main():
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype=torch.float16 if device == "cuda" else torch.float32,
-        device_map="auto" if device == "cuda" else None
+        device_map="auto" if device == "cuda" else None,
     )
 
     if device == "cpu":
@@ -219,7 +217,7 @@ def main():
 
     # Load banned phrases
     print("Loading banned phrases...")
-    with open("../src/resklogits/data/banned_phrases.json", 'r') as f:
+    with open("../src/resklogits/data/banned_phrases.json", "r") as f:
         data = json.load(f)
     all_phrases = [phrase for phrases in data.values() for phrase in phrases]
     print(f"✓ Loaded {len(all_phrases)} phrases")
@@ -241,7 +239,9 @@ def main():
         print("=" * 80)
         print("BENCHMARK 2: Per-Token Processing Overhead")
         print("=" * 80)
-        overhead_results = benchmark_processing_overhead(processor, tokenizer, iterations=1000, device=device)
+        overhead_results = benchmark_processing_overhead(
+            processor, tokenizer, iterations=1000, device=device
+        )
 
         print(f"{'Batch Size':<12} {'Avg Time (ms)':<15} {'Throughput (tok/s)':<20}")
         print("-" * 80)
@@ -258,7 +258,7 @@ def main():
         "Once upon a time",
         "In a galaxy far",
         "To be or not to",
-        "It was the best"
+        "It was the best",
     ]
 
     gen_results = benchmark_generation_overhead(
@@ -269,10 +269,14 @@ def main():
     print("-" * 80)
     total_overhead = 0
     for result in gen_results:
-        prompt_short = result['prompt'][:22] + "..." if len(result['prompt']) > 22 else result['prompt']
-        print(f"{prompt_short:<25} {result['time_without']:<15.3f} {result['time_with']:<17.3f} "
-              f"{result['overhead_pct']:<14.1f}%")
-        total_overhead += result['overhead_pct']
+        prompt_short = (
+            result["prompt"][:22] + "..." if len(result["prompt"]) > 22 else result["prompt"]
+        )
+        print(
+            f"{prompt_short:<25} {result['time_without']:<15.3f} {result['time_with']:<17.3f} "
+            f"{result['overhead_pct']:<14.1f}%"
+        )
+        total_overhead += result["overhead_pct"]
 
     avg_overhead = total_overhead / len(gen_results)
     print("-" * 80)
@@ -285,11 +289,15 @@ def main():
     print("=" * 80)
     scaling_results = benchmark_scaling(tokenizer, all_phrases, device)
 
-    print(f"{'Patterns':<12} {'Build (s)':<12} {'Process (ms)':<15} {'States':<10} {'Danger Tokens':<15}")
+    print(
+        f"{'Patterns':<12} {'Build (s)':<12} {'Process (ms)':<15} {'States':<10} {'Danger Tokens':<15}"
+    )
     print("-" * 80)
     for count, result in scaling_results.items():
-        print(f"{count:<12} {result['build_time']:<12.3f} {result['process_time_ms']:<15.4f} "
-              f"{result['states']:<10} {result['danger_tokens']:<15}")
+        print(
+            f"{count:<12} {result['build_time']:<12.3f} {result['process_time_ms']:<15.4f} "
+            f"{result['states']:<10} {result['danger_tokens']:<15}"
+        )
     print()
 
     # Benchmark 5: Memory
@@ -299,7 +307,9 @@ def main():
         print("=" * 80)
         memory_mb = benchmark_memory(processor, device)
         print(f"Peak GPU memory: {memory_mb:.2f} MB")
-        print(f"Danger mask size: {processor.ac.danger_mask.numel() * processor.ac.danger_mask.element_size() / 1024 / 1024:.2f} MB")
+        print(
+            f"Danger mask size: {processor.ac.danger_mask.numel() * processor.ac.danger_mask.element_size() / 1024 / 1024:.2f} MB"
+        )
         print()
 
     # Summary
@@ -310,7 +320,9 @@ def main():
     print(f"✓ Build time: {build_time:.3f}s")
     if device == "cuda":
         print(f"✓ Processing overhead: ~{overhead_results[1]['avg_time_ms']:.4f}ms/token (batch=1)")
-        print(f"✓ Max throughput: ~{max(r['throughput'] for r in overhead_results.values()):.0f} tokens/s")
+        print(
+            f"✓ Max throughput: ~{max(r['throughput'] for r in overhead_results.values()):.0f} tokens/s"
+        )
     print(f"✓ Generation overhead: ~{avg_overhead:.1f}%")
     print(f"✓ Danger tokens: {processor.ac.danger_mask.sum().item()} / {tokenizer.vocab_size}")
     if device == "cuda":
@@ -321,4 +333,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
