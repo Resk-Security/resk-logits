@@ -17,7 +17,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       - name: Install uv
         uses: astral-sh/setup-uv@v3
@@ -26,17 +26,18 @@ jobs:
       
       - name: Install linting tools
         run: |
+          uv venv
           uv pip install black ruff mypy
       
       - name: Check formatting with black
         run: |
-          black --check src/ tests/ examples/
+          uv run black --check src/ tests/ examples/
       
       - name: Lint with ruff
         run: |
-          ruff check src/ tests/ examples/
+          uv run ruff check src/ tests/ examples/
       
       - name: Type check with mypy
         run: |
-          mypy src/ || true  # Non-blocking
+          uv run mypy src/ || true  # Non-blocking
 
