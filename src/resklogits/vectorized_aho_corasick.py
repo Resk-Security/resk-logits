@@ -6,6 +6,7 @@ optimized for GPU operations with PyTorch. It pre-computes a danger mask
 for ultra-fast token filtering during generation.
 """
 
+import time
 from collections import defaultdict, deque
 from typing import Dict, List, Set, Tuple, cast
 
@@ -20,7 +21,7 @@ class VectorizedAhoCorasick:
     of dangerous tokens for O(1) GPU-based filtering.
     """
 
-    def __init__(self, tokenizer, banned_phrases: List[str], device: str = "cuda"):
+    def __init__(self, tokenizer, banned_phrases: List[str], device: str = "cuda", verbose: bool = False):
         """
         Initialize the Aho-Corasick automaton.
 
@@ -28,26 +29,54 @@ class VectorizedAhoCorasick:
             tokenizer: HuggingFace tokenizer
             banned_phrases: List of phrases to ban
             device: Device for GPU operations ('cuda' or 'cpu')
+            verbose: Print timing information for profiling
         """
         self.tokenizer = tokenizer
         self.vocab_size = tokenizer.vocab_size
         self.device = device
+        self.verbose = verbose
 
-        # 1. Tokenize all banned phrases
-        self.patterns = []
-        for phrase in banned_phrases:
-            ids = tokenizer.encode(phrase, add_special_tokens=False)
-            if ids:
-                self.patterns.append(tuple(ids))
+        t0 = time.time()
+        
+        # 1. Tokenize all banned phrases using batch processing
+        if banned_phrases:
+            # Use batch_encode_plus for faster tokenization
+            encoded = tokenizer.batch_encode_plus(
+                banned_phrases,
+                add_special_tokens=False,
+                return_attention_mask=False,
+                padding=False,
+                truncation=False
+            )
+            self.patterns = [tuple(ids) for ids in encoded['input_ids'] if ids]
+        else:
+            self.patterns = []
+        
+        t1 = time.time()
+        if self.verbose:
+            print(f"[Profile] Tokenization (batch): {t1-t0:.3f}s")
 
         # 2. Build Aho-Corasick automaton (CPU, one-time at startup)
         self.trie, self.failure, self.output = self._build_aho_corasick()
+        
+        t2 = time.time()
+        if self.verbose:
+            print(f"[Profile] Build trie: {t2-t1:.3f}s")
 
         # 3. Pre-compute state transitions
         self.state_to_tokens = self._precompute_state_transitions()
+        
+        t3 = time.time()
+        if self.verbose:
+            print(f"[Profile] Precompute transitions: {t3-t2:.3f}s")
 
         # 4. Build danger mask (GPU tensor)
         self.danger_mask = self._build_danger_mask()
+        
+        t4 = time.time()
+        if self.verbose:
+            print(f"[Profile] Build danger mask: {t4-t3:.3f}s")
+            print(f"[Profile] TOTAL BUILD TIME: {t4-t0:.3f}s")
 
     def _build_aho_corasick(self) -> Tuple[Dict, Dict, Dict]:
         """
@@ -57,18 +86,22 @@ class VectorizedAhoCorasick:
             (trie, failure, output) tuple:
             - trie: Dict[state, Dict[token, next_state]]
             - failure: Dict[state, fallback_state]
-            - output: Dict[state, List[pattern_indices]]
+            - output: Dict[state, List[pattern_indices]] (only direct matches, not failure chain)
         """
         trie: Dict[int, Dict[int, int]] = defaultdict(dict)
         failure: Dict[int, int] = {}
-        output = defaultdict(list)
+        output: Dict[int, List[int]] = defaultdict(list)
+        
+        # State counter for efficient state creation
+        state_counter = 1  # 0 is root
 
         # Build trie structure
         for idx, pattern in enumerate(self.patterns):
             node = 0
             for token in pattern:
                 if token not in trie[node]:
-                    trie[node][token] = len(trie)
+                    trie[node][token] = state_counter
+                    state_counter += 1
                 node = trie[node][token]
             output[node].append(idx)
 
@@ -97,9 +130,7 @@ class VectorizedAhoCorasick:
                 else:
                     failure[child] = 0
 
-                # Merge output from failure state
-                output[child].extend(output[failure[child]])
-
+        # Return without pre-computing all outputs - we'll check failure chain dynamically
         return dict(trie), failure, dict(output)
 
     def _precompute_state_transitions(self) -> Dict[int, Set[int]]:
@@ -120,48 +151,31 @@ class VectorizedAhoCorasick:
         Build a GPU binary mask indicating dangerous tokens.
 
         This mask is used for vectorized penalty application.
-        The mask marks tokens that:
-        1. Appear in any banned pattern
-        2. Lead to states with output (complete matches)
+        Simply marks all tokens that appear in any banned pattern as dangerous.
 
         Returns:
             Boolean tensor of shape [vocab_size] on GPU
         """
         danger_tokens: Set[int] = set()
 
-        # Add all tokens from banned patterns
+        # Add all tokens from all banned patterns
+        # This is O(n) where n = total tokens across all patterns
         for pattern in self.patterns:
             danger_tokens.update(pattern)
-
-        # Pre-compute reverse mapping: state -> set of tokens that lead to it
-        # This avoids O(n²) nested loops
-        state_to_incoming_tokens: Dict[int, Set[int]] = defaultdict(set)
-        for _parent_state, transitions in self.trie.items():
-            for token, next_state in transitions.items():
-                state_to_incoming_tokens[next_state].add(token)
-
-        # Add tokens that can lead to matches by traversing the trie
-        for state, outputs in self.output.items():
-            if outputs:
-                # Walk back through failure links to find all contributing tokens
-                current = state
-                visited = set()
-
-                while current != 0 and current not in visited:
-                    visited.add(current)
-
-                    # Use pre-computed reverse mapping (O(1) lookup instead of O(n))
-                    if current in state_to_incoming_tokens:
-                        danger_tokens.update(state_to_incoming_tokens[current])
-
-                    current = self.failure.get(current, 0)
 
         # Create GPU mask efficiently using tensor operations
         mask = torch.zeros(self.vocab_size, dtype=torch.bool, device=self.device)
         if danger_tokens:
-            token_ids = torch.tensor(list(danger_tokens), dtype=torch.long, device=self.device)
-            valid_mask = token_ids < self.vocab_size
-            mask[token_ids[valid_mask]] = True
+            # Convert to sorted list for better memory locality
+            token_list = sorted(danger_tokens)
+            # Create tensor on CPU first, then move to device if needed
+            token_ids = torch.tensor(token_list, dtype=torch.long, device='cpu')
+            # Filter out any tokens >= vocab_size
+            valid_tokens = token_ids[token_ids < self.vocab_size]
+            # Move to target device and set mask
+            if self.device == 'cuda':
+                valid_tokens = valid_tokens.to('cuda')
+            mask[valid_tokens] = True
 
         return mask
 
@@ -186,6 +200,7 @@ class VectorizedAhoCorasick:
     def has_match(self, state: int) -> bool:
         """
         Check if current state represents a complete pattern match.
+        Follows failure links to check all possible matches.
 
         Args:
             state: Current state
@@ -193,11 +208,25 @@ class VectorizedAhoCorasick:
         Returns:
             True if state has an output (complete match)
         """
-        return state in self.output and len(self.output[state]) > 0
+        # Check current state
+        if state in self.output and len(self.output[state]) > 0:
+            return True
+        
+        # Check states reachable via failure links
+        current = state
+        visited = set()
+        while current in self.failure and current not in visited:
+            visited.add(current)
+            current = self.failure[current]
+            if current in self.output and len(self.output[current]) > 0:
+                return True
+        
+        return False
 
     def get_matched_patterns(self, state: int) -> List[int]:
         """
         Get indices of matched patterns at current state.
+        Follows failure links to collect all matches.
 
         Args:
             state: Current state
@@ -205,7 +234,16 @@ class VectorizedAhoCorasick:
         Returns:
             List of pattern indices that match
         """
-        return cast(List[int], self.output.get(state, []))
+        matches: Set[int] = set(self.output.get(state, []))
+        # Collect matches from failure chain
+        current = state
+        visited = set()
+        while current in self.failure and current not in visited:
+            visited.add(current)
+            current = self.failure[current]
+            matches.update(self.output.get(current, []))
+        
+        return list(matches)
 
     def __repr__(self) -> str:
         return (
