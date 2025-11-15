@@ -133,6 +133,13 @@ class VectorizedAhoCorasick:
         for pattern in self.patterns:
             danger_tokens.update(pattern)
 
+        # Pre-compute reverse mapping: state -> set of tokens that lead to it
+        # This avoids O(n²) nested loops
+        state_to_incoming_tokens: Dict[int, Set[int]] = defaultdict(set)
+        for parent_state, transitions in self.trie.items():
+            for token, next_state in transitions.items():
+                state_to_incoming_tokens[next_state].add(token)
+
         # Add tokens that can lead to matches by traversing the trie
         for state, outputs in self.output.items():
             if outputs:
@@ -143,19 +150,18 @@ class VectorizedAhoCorasick:
                 while current != 0 and current not in visited:
                     visited.add(current)
 
-                    # Add all tokens that transition to this state
-                    for _parent_state, transitions in self.trie.items():
-                        for token, next_state in transitions.items():
-                            if next_state == current:
-                                danger_tokens.add(token)
+                    # Use pre-computed reverse mapping (O(1) lookup instead of O(n))
+                    if current in state_to_incoming_tokens:
+                        danger_tokens.update(state_to_incoming_tokens[current])
 
                     current = self.failure.get(current, 0)
 
-        # Create GPU mask
+        # Create GPU mask efficiently using tensor operations
         mask = torch.zeros(self.vocab_size, dtype=torch.bool, device=self.device)
-        for token_id in danger_tokens:
-            if token_id < self.vocab_size:
-                mask[token_id] = True
+        if danger_tokens:
+            token_ids = torch.tensor(list(danger_tokens), dtype=torch.long, device=self.device)
+            valid_mask = token_ids < self.vocab_size
+            mask[token_ids[valid_mask]] = True
 
         return mask
 

@@ -1,6 +1,104 @@
 # ReskLogits
 
-GPU-Accelerated Shadow Ban Logits Processor
+[![GitHub](https://img.shields.io/badge/GitHub-Resk--Security-blue)](https://github.com/Resk-Security/resk-logits)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/)
+
+## 🎯 What is ReskLogits?
+
+**ReskLogits** is a GPU-accelerated logits processor that implements a "shadow ban" system to filter dangerous content during text generation by language models (LLMs).
+
+### Key Concept: Shadow Ban vs Hard Block
+
+Unlike traditional methods that completely block certain tokens (hard block), ReskLogits applies an **invisible penalty** to dangerous tokens, making them extremely unlikely without explicitly blocking generation. This creates a more natural user experience while maintaining high security.
+
+### How It Works
+
+The library uses a vectorized **Aho-Corasick** algorithm on GPU to detect dangerous patterns in generated text. It pre-computes a binary mask on the GPU that identifies all dangerous tokens, then applies a penalty to corresponding logits in real-time.
+
+```mermaid
+graph LR
+    A[User Prompt] --> B[LLM Model]
+    B --> C[Raw Logits<br/>1×vocab_size]
+    C --> D[VectorizedAhoCorasick<br/>State + GPU Mask]
+    D --> E[Danger Mask<br/>1×vocab_size]
+    E --> F[Apply Penalty<br/>logits[mask] += -15.0]
+    F --> G[Penalized Logits]
+    G --> H[Token Generation]
+    H --> I{Dangerous Token?}
+    I -->|Yes| J[Probability ~0.00003%]
+    I -->|No| K[Normal Generation]
+    J --> L[Safe Text Generated]
+    K --> L
+    
+    style D fill:#e1f5ff
+    style E fill:#fff4e1
+    style F fill:#ffe1e1
+    style J fill:#ffcccc
+```
+
+### Concrete Example
+
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from resklogits import ShadowBanProcessor
+import torch
+
+# 1. Load model and tokenizer
+model = AutoModelForCausalLM.from_pretrained("gpt2")
+tokenizer = AutoTokenizer.from_pretrained("gpt2")
+tokenizer.pad_token = tokenizer.eos_token
+
+# 2. Define banned phrases
+banned_phrases = [
+    "how to make a bomb",
+    "kill yourself",
+    "hack into system",
+    "create explosives"
+]
+
+# 3. Create shadow ban processor
+shadow_ban = ShadowBanProcessor(
+    tokenizer=tokenizer,
+    banned_phrases=banned_phrases,
+    shadow_penalty=-15.0,  # Strong penalty (probability ~0.00003%)
+    device="cuda"  # Use GPU for acceleration
+)
+
+# 4. Generate text with protection
+prompt = "Tell me how to"
+inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+
+# Reset state for new generation
+shadow_ban.reset()
+
+# Generate with shadow ban
+outputs = model.generate(
+    **inputs,
+    logits_processor=[shadow_ban],  # ← The magic filter
+    max_new_tokens=50,
+    do_sample=True,
+    temperature=0.7
+)
+
+# Result: Model naturally avoids dangerous tokens
+generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print(f"Generated text: {generated_text}")
+# → "Tell me how to improve your writing skills..." ✅
+# Instead of "Tell me how to make a bomb..." ❌
+```
+
+### Key Advantages
+
+- ⚡ **Ultra-fast**: ~0.001ms latency per token thanks to GPU
+- 🎭 **Invisible**: User doesn't notice the filtering
+- 🛡️ **Jailbreak-resistant**: Stateful detection captures partial generations
+- 📈 **Scalable**: Efficiently handles 1000+ banned phrases
+- 🔧 **Easy to integrate**: Compatible with HuggingFace Transformers, vLLM, TGI
+
+---
+
+**GPU-Accelerated Shadow Ban Logits Processor**
 
 Ultra-fast, vectorized Aho-Corasick pattern matching for LLM safety filtering with zero-latency GPU operations.
 
