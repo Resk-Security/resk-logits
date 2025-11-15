@@ -136,7 +136,7 @@ class VectorizedAhoCorasick:
         # Pre-compute reverse mapping: state -> set of tokens that lead to it
         # This avoids O(n²) nested loops
         state_to_incoming_tokens: Dict[int, Set[int]] = defaultdict(set)
-        for parent_state, transitions in self.trie.items():
+        for _parent_state, transitions in self.trie.items():
             for token, next_state in transitions.items():
                 state_to_incoming_tokens[next_state].add(token)
 

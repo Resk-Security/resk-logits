@@ -19,14 +19,14 @@ The library uses a vectorized **Aho-Corasick** algorithm on GPU to detect danger
 ```mermaid
 graph LR
     A[User Prompt] --> B[LLM Model]
-    B --> C[Raw Logits<br/>1×vocab_size]
-    C --> D[VectorizedAhoCorasick<br/>State + GPU Mask]
-    D --> E[Danger Mask<br/>1×vocab_size]
-    E --> F[Apply Penalty<br/>logits[mask] += -15.0]
+    B --> C["Raw Logits<br/>1×vocab_size"]
+    C --> D["VectorizedAhoCorasick<br/>State + GPU Mask"]
+    D --> E["Danger Mask<br/>1×vocab_size"]
+    E --> F["Apply Penalty<br/>logits mask += -15.0"]
     F --> G[Penalized Logits]
     G --> H[Token Generation]
     H --> I{Dangerous Token?}
-    I -->|Yes| J[Probability ~0.00003%]
+    I -->|Yes| J["Probability ~0.00003%"]
     I -->|No| K[Normal Generation]
     J --> L[Safe Text Generated]
     K --> L
@@ -62,7 +62,7 @@ shadow_ban = ShadowBanProcessor(
     tokenizer=tokenizer,
     banned_phrases=banned_phrases,
     shadow_penalty=-15.0,  # Strong penalty (probability ~0.00003%)
-    device="cuda"  # Use GPU for acceleration
+    device="cuda"  # Use GPU
 )
 
 # 4. Generate text with protection
@@ -90,23 +90,21 @@ print(f"Generated text: {generated_text}")
 
 ### Key Advantages
 
-- ⚡ **Ultra-fast**: ~0.001ms latency per token thanks to GPU
 - 🎭 **Invisible**: User doesn't notice the filtering
 - 🛡️ **Jailbreak-resistant**: Stateful detection captures partial generations
-- 📈 **Scalable**: Efficiently handles 1000+ banned phrases
+- 📈 **Scalable**: Handles 1000+ banned phrases
 - 🔧 **Easy to integrate**: Compatible with HuggingFace Transformers, vLLM, TGI
 
 ---
 
 **GPU-Accelerated Shadow Ban Logits Processor**
 
-Ultra-fast, vectorized Aho-Corasick pattern matching for LLM safety filtering with zero-latency GPU operations.
+Vectorized Aho-Corasick pattern matching for LLM safety filtering with GPU operations.
 
 ## Features
 
-- **Zero-latency filtering**: Pre-computed GPU mask (~0.001ms/token overhead)
 - **Shadow ban**: Penalizes dangerous tokens without hard blocking
-- **Scalable**: Handles 1000+ banned phrases efficiently
+- **Scalable**: Handles 1000+ banned phrases
 - **Jailbreak-resistant**: Stateful pattern matching catches partial generations
 - **GPU-accelerated**: Vectorized operations on CUDA
 - **Symbolic rule generator**: Generate patterns from YAML templates and logic rules
@@ -257,18 +255,10 @@ patterns = load_rules_from_yaml("rules.yaml")
 - **Templates**: Variable substitution and combinatorial expansion
 - **Logic rules**: AND, OR, NOT operators
 - **Synonyms**: Automatic synonym expansion
-- **Caching**: Hash-based caching for instant regeneration
+- **Caching**: Hash-based caching avoids regeneration
 - **CLI**: Full command-line interface
 
 See [RULE_BUILDER.md](RULE_BUILDER.md) for complete guide.
-
-## Performance
-
-Tested on RTX 4090:
-- **Build time**: ~0.5s for 1000 patterns
-- **Per-token overhead**: ~0.001ms
-- **Throughput**: 1M+ tokens/second (processor only)
-- **Memory**: ~10MB for danger mask
 
 ## How It Works
 
@@ -284,7 +274,6 @@ Classical multi-pattern matching with:
 Pre-computes a binary mask `[vocab_size]` where:
 - `mask[i] = True` if token `i` is dangerous
 - Applied via vectorized operation: `scores[:, mask] += penalty`
-- Zero per-token CPU overhead
 
 ### 3. State Tracking
 
@@ -319,7 +308,6 @@ python demo.py
 
 Tests:
 - Loading and building automaton
-- Performance benchmarking
 - Generation with/without shadow ban
 - Multi-level filtering
 
@@ -329,10 +317,8 @@ cd examples
 python benchmark.py
 ```
 
-Comprehensive performance benchmarks:
+Comprehensive benchmarks:
 - Automaton build time
-- Per-token processing overhead
-- End-to-end generation overhead
 - Scaling with pattern count
 - Memory usage
 
