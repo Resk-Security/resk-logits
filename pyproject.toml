@@ -1,13 +1,13 @@
 [project]
 name = "resklogits"
-version = "0.1.0"
-description = "GPU-accelerated shadow ban logits processor for LLM safety filtering"
+version = "0.1.1"
+description = "ReskLogits shadow ban logits processor for LLM safety filtering"
 authors = [
     {name = "RESK Team"}
 ]
 readme = "README.md"
 requires-python = ">=3.13"
-license = {text = "MIT"}
+license = {text = "APACHE 2"}
 keywords = ["llm", "safety", "filtering", "aho-corasick", "gpu", "logits", "transformers"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -52,10 +52,9 @@ dev = [
 resklogits = "resklogits.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/resk-team/resklogits"
-Documentation = "https://github.com/resk-team/resklogits#readme"
-Repository = "https://github.com/resk-team/resklogits"
-Issues = "https://github.com/resk-team/resklogits/issues"
+Homepage = "https://github.com/Resk-Security/resk-logits"
+Repository = "https://github.com/Resk-Security/resk-logits"
+Issues = "https://github.com/Resk-Security/resk-logits/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -75,6 +74,7 @@ include = [
     "/README.md",
     "/pyproject.toml",
     "/LICENSE",
+    "/examples",
 ]
 
 [tool.black]

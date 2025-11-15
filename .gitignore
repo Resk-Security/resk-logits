@@ -23,6 +23,7 @@ share/python-wheels/
 *.egg
 MANIFEST
  
+scripts/
 LOCAL_TESTING.md
 
 # Virtual environments
