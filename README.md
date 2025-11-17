@@ -1,8 +1,16 @@
 # ReskLogits
 
-[![GitHub](https://img.shields.io/badge/GitHub-Resk--Security-blue)](https://github.com/Resk-Security/resk-logits)
-[![License](https://img.shields.io/badge/License-Apache--2.0-green)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.13+-blue)](https://www.python.org/)
+[![PyPI version](https://img.shields.io/pypi/v/resklogits.svg)](https://pypi.org/project/resklogits/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/resklogits.svg)](https://pypi.org/project/resklogits/)
+[![License](https://img.shields.io/pypi/l/resklogits.svg)](https://github.com/Resk-Security/resk-logits/blob/main/LICENSE)
+[![Downloads](https://static.pepy.tech/badge/resklogits)](https://pepy.tech/project/resklogits)
+[![GitHub issues](https://img.shields.io/github/issues/Resk-Security/resk-logits.svg)](https://github.com/Resk-Security/resk-logits/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Resk-Security/resk-logits.svg)](https://github.com/Resk-Security/resk-logits/stargazers)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg)](https://github.com/PyCQA/bandit)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Resk-Security/resk-logits)](https://github.com/Resk-Security/resk-logits/commits/main)
+[![PyPI - Implementation](https://img.shields.io/pypi/implementation/resklogits)](https://pypi.org/project/resklogits/)
+[![LLM Security](https://img.shields.io/badge/LLM-Security-red)](https://github.com/Resk-Security/resk-logits)
 
 ## 🎯 What is ReskLogits?
 
@@ -14,7 +22,7 @@ Unlike traditional methods that completely block certain tokens (hard block), Re
 
 ### How It Works
 
-The library uses a vectorized **Aho-Corasick** algorithm on GPU'or (CPU) to detect dangerous patterns in generated text. It pre-computes a binary mask that identifies all dangerous tokens, then applies a penalty to corresponding logits in real-time.
+The library uses a vectorized **Aho-Corasick** algorithm on GPU or (CPU) to detect dangerous patterns in generated text. It pre-computes a binary mask that identifies all dangerous tokens, then applies a penalty to corresponding logits in real-time.
 
 **Example: with GPT2**
 
@@ -22,7 +30,7 @@ Prompt: "Tell me how to make a bomb"
 
 **WITHOUT Shadow Ban:**
 ```
-Tell me how to make a bomb!"
+
 
 With that, the man turned and went to where the bomb lay.
 
@@ -35,11 +43,8 @@ Well, he had the bomb ready.
 
 **WITH Shadow Ban:**
 ```
-Tell me how to make a bomb?" "There will be four," said I, "one with two guns, one with one man." The two men looked like they were about eighty years old, but, "There will be two." I took out my pistol, opened it,
+"There will be four," said I, "one with two guns, one with one man." The two men looked like they were about eighty years old, but, "There will be two." I took out my pistol, opened it,
 ```
-
-
-
 
 ```mermaid
 graph LR
