@@ -21,7 +21,9 @@ class VectorizedAhoCorasick:
     of dangerous tokens for O(1) GPU-based filtering.
     """
 
-    def __init__(self, tokenizer, banned_phrases: List[str], device: str = "cuda", verbose: bool = False):
+    def __init__(
+        self, tokenizer, banned_phrases: List[str], device: str = "cuda", verbose: bool = False
+    ):
         """
         Initialize the Aho-Corasick automaton.
 
@@ -37,7 +39,7 @@ class VectorizedAhoCorasick:
         self.verbose = verbose
 
         t0 = time.time()
-        
+
         # 1. Tokenize all banned phrases using batch processing
         if banned_phrases:
             # Use batch_encode_plus for faster tokenization
@@ -46,33 +48,33 @@ class VectorizedAhoCorasick:
                 add_special_tokens=False,
                 return_attention_mask=False,
                 padding=False,
-                truncation=False
+                truncation=False,
             )
-            self.patterns = [tuple(ids) for ids in encoded['input_ids'] if ids]
+            self.patterns = [tuple(ids) for ids in encoded["input_ids"] if ids]
         else:
             self.patterns = []
-        
+
         t1 = time.time()
         if self.verbose:
             print(f"[Profile] Tokenization (batch): {t1-t0:.3f}s")
 
         # 2. Build Aho-Corasick automaton (CPU, one-time at startup)
         self.trie, self.failure, self.output = self._build_aho_corasick()
-        
+
         t2 = time.time()
         if self.verbose:
             print(f"[Profile] Build trie: {t2-t1:.3f}s")
 
         # 3. Pre-compute state transitions
         self.state_to_tokens = self._precompute_state_transitions()
-        
+
         t3 = time.time()
         if self.verbose:
             print(f"[Profile] Precompute transitions: {t3-t2:.3f}s")
 
         # 4. Build danger mask (GPU tensor)
         self.danger_mask = self._build_danger_mask()
-        
+
         t4 = time.time()
         if self.verbose:
             print(f"[Profile] Build danger mask: {t4-t3:.3f}s")
@@ -91,7 +93,7 @@ class VectorizedAhoCorasick:
         trie: Dict[int, Dict[int, int]] = defaultdict(dict)
         failure: Dict[int, int] = {}
         output: Dict[int, List[int]] = defaultdict(list)
-        
+
         # State counter for efficient state creation
         state_counter = 1  # 0 is root
 
@@ -169,12 +171,12 @@ class VectorizedAhoCorasick:
             # Convert to sorted list for better memory locality
             token_list = sorted(danger_tokens)
             # Create tensor on CPU first, then move to device if needed
-            token_ids = torch.tensor(token_list, dtype=torch.long, device='cpu')
+            token_ids = torch.tensor(token_list, dtype=torch.long, device="cpu")
             # Filter out any tokens >= vocab_size
             valid_tokens = token_ids[token_ids < self.vocab_size]
             # Move to target device and set mask
-            if self.device == 'cuda':
-                valid_tokens = valid_tokens.to('cuda')
+            if self.device == "cuda":
+                valid_tokens = valid_tokens.to("cuda")
             mask[valid_tokens] = True
 
         return mask
@@ -211,7 +213,7 @@ class VectorizedAhoCorasick:
         # Check current state
         if state in self.output and len(self.output[state]) > 0:
             return True
-        
+
         # Check states reachable via failure links
         current = state
         visited = set()
@@ -220,7 +222,7 @@ class VectorizedAhoCorasick:
             current = self.failure[current]
             if current in self.output and len(self.output[current]) > 0:
                 return True
-        
+
         return False
 
     def get_matched_patterns(self, state: int) -> List[int]:
@@ -242,7 +244,7 @@ class VectorizedAhoCorasick:
             visited.add(current)
             current = self.failure[current]
             matches.update(self.output.get(current, []))
-        
+
         return list(matches)
 
     def __repr__(self) -> str:
