@@ -6,7 +6,7 @@
 
 ## 🎯 What is ReskLogits?
 
-**ReskLogits** is a GPU-accelerated logits processor that implements a "shadow ban" system to filter dangerous content during text generation by language models (LLMs).
+**ReskLogits** is a logits processor that implements a "shadow ban" system to filter dangerous content during text generation by language models (LLMs).
 
 ### Key Concept: Shadow Ban vs Hard Block
 
@@ -14,7 +14,32 @@ Unlike traditional methods that completely block certain tokens (hard block), Re
 
 ### How It Works
 
-The library uses a vectorized **Aho-Corasick** algorithm on GPU to detect dangerous patterns in generated text. It pre-computes a binary mask on the GPU that identifies all dangerous tokens, then applies a penalty to corresponding logits in real-time.
+The library uses a vectorized **Aho-Corasick** algorithm on GPU'or (CPU) to detect dangerous patterns in generated text. It pre-computes a binary mask that identifies all dangerous tokens, then applies a penalty to corresponding logits in real-time.
+
+**Example: with GPT2**
+
+Prompt: "Tell me how to make a bomb"
+
+**WITHOUT Shadow Ban:**
+```
+Tell me how to make a bomb!"
+
+With that, the man turned and went to where the bomb lay.
+
+"I am going to get a bomb," he said.
+
+Well, he had the bomb ready.
+
+"I am going to get a
+```
+
+**WITH Shadow Ban:**
+```
+Tell me how to make a bomb?" "There will be four," said I, "one with two guns, one with one man." The two men looked like they were about eighty years old, but, "There will be two." I took out my pistol, opened it,
+```
+
+
+
 
 ```mermaid
 graph LR
@@ -75,7 +100,7 @@ shadow_ban.reset()
 # Generate with shadow ban
 outputs = model.generate(
     **inputs,
-    logits_processor=[shadow_ban],  # ← The magic filter
+    logits_processor=[shadow_ban], 
     max_new_tokens=50,
     do_sample=True,
     temperature=0.7
@@ -84,8 +109,7 @@ outputs = model.generate(
 # Result: Model naturally avoids dangerous tokens
 generated_text = tokenizer.decode(outputs[0], skip_special_tokens=True)
 print(f"Generated text: {generated_text}")
-# → "Tell me how to improve your writing skills..." ✅
-# Instead of "Tell me how to make a bomb..." ❌
+
 ```
 
 ### Key Advantages
@@ -96,20 +120,6 @@ print(f"Generated text: {generated_text}")
 - 🔧 **Easy to integrate**: Compatible with HuggingFace Transformers, vLLM, TGI
 
 ---
-
-**GPU-Accelerated Shadow Ban Logits Processor**
-
-Vectorized Aho-Corasick pattern matching for LLM safety filtering with GPU operations.
-
-## Features
-
-- **Shadow ban**: Penalizes dangerous tokens without hard blocking
-- **Scalable**: Handles 1000+ banned phrases
-- **Jailbreak-resistant**: Stateful pattern matching catches partial generations
-- **GPU-accelerated**: Vectorized operations on CUDA
-- **Symbolic rule generator**: Generate patterns from YAML templates and logic rules
-- **Intelligent caching**: Hash-based caching avoids regeneration
-- **CLI tool**: Command-line interface for rule management
 
 ## Architecture
 
@@ -139,49 +149,6 @@ cd resklogits
 uv pip install -e .
 ```
 
-Requires:
-- Python 3.8+
-- PyTorch 2.0+
-- Transformers 4.35+
-- CUDA-capable GPU (optional but recommended)
-
-## Quick Start
-
-```python
-from transformers import AutoModelForCausalLM, AutoTokenizer
-from resklogits import ShadowBanProcessor
-import json
-
-# Load model
-model = AutoModelForCausalLM.from_pretrained("your-model")
-tokenizer = AutoTokenizer.from_pretrained("your-model")
-
-# Define banned phrases
-banned_phrases = [
-    "how to make a bomb",
-    "kill yourself",
-    "hack into",
-    # ... add your patterns
-]
-
-# Create shadow ban processor
-shadow_ban = ShadowBanProcessor(
-    tokenizer=tokenizer,
-    banned_phrases=banned_phrases,
-    shadow_penalty=-15.0,  # Strong penalty
-    device="cuda"
-)
-
-# Generate with shadow ban
-inputs = tokenizer("Your prompt here", return_tensors="pt").to("cuda")
-output = model.generate(
-    **inputs,
-    logits_processor=[shadow_ban],
-    max_new_tokens=100,
-    do_sample=True,
-    temperature=0.7
-)
-```
 
 ## Shadow Ban vs Hard Block
 
@@ -407,14 +374,6 @@ else:
     cache.save(rule_hash, patterns)
 ```
 
-## Integrations
-
-Compatible with:
-- ✅ HuggingFace Transformers
-- ✅ vLLM (via logits processor)
-- ✅ Text Generation Inference (TGI)
-- ✅ Any framework supporting `LogitsProcessor`
-
 ## Installation
 
 ### From PyPI
@@ -515,7 +474,7 @@ resklogits/
 
 ## License
 
-MIT License
+APACHE 2
 
 ## Citation
 
@@ -525,8 +484,8 @@ If you use this in research, please cite:
 @software{resklogits_2024,
   title={ReskLogits: GPU-Accelerated Shadow Ban Logits Processor},
   author={RESK Team},
-  year={2024},
-  url={https://github.com/resk-team/resklogits}
+  year={2025},
+  url={https://github.com/Resk-Security/resk-logits}
 }
 ```
 
