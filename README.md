@@ -379,21 +379,6 @@ else:
     cache.save(rule_hash, patterns)
 ```
 
-## Installation
-
-### From PyPI
-
-```bash
-pip install resklogits
-```
-
-### From Source
-
-```bash
-git clone https://github.com/resk-team/resklogits.git
-cd resklogits
-uv pip install -e .
-```
 
 ## Development
 
@@ -486,9 +471,9 @@ APACHE 2
 If you use this in research, please cite:
 
 ```bibtex
-@software{resklogits_2024,
+@software{resklogits_2025,
   title={ReskLogits: GPU-Accelerated Shadow Ban Logits Processor},
-  author={RESK Team},
+  author={RESK},
   year={2025},
   url={https://github.com/Resk-Security/resk-logits}
 }
