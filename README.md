@@ -478,13 +478,3 @@ If you use this in research, please cite:
   url={https://github.com/Resk-Security/resk-logits}
 }
 ```
-
-## Contributing
-
-Contributions welcome! Areas for improvement:
-- Additional language support
-- More efficient GPU kernels
-- Dynamic pattern updates
-- Toxicity-based adaptive penalties
-- Extended pattern datasets
-
