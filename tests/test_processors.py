@@ -290,7 +290,7 @@ def test_to_vllm_wraps_processor():
     wrapped = to_vllm(original)
 
     assert isinstance(wrapped, object)
-    assert hasattr(wrapped, "__call__")
+    assert callable(wrapped)
 
 
 def test_vllm_wrapper_call_signature():
@@ -368,7 +368,7 @@ def test_trigger_phrase_detection_triggers_response():
     scores = torch.randn(1, vocab_size)
 
     # Step through each trigger token
-    for i, tid in enumerate(trigger_ids):
+    for i, _tid in enumerate(trigger_ids):
         input_ids = torch.tensor([trigger_ids[: i + 1]])
         scores = torch.randn(1, vocab_size)
         original = scores.clone()
