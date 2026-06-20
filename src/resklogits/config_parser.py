@@ -3,14 +3,26 @@ YAML Config Parser for Symbolic Rules
 
 Parses YAML configuration files and generates patterns using
 templates, logic rules, and automata.
+
+Also supports configuring logits processors (GenLength, BanToken,
+TriggerPhrase, etc.) via a ``processors`` section in the YAML file.
 """
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import yaml
+from transformers import PreTrainedTokenizerBase
 
 from .cache import RuleCache
 from .pattern_automata import PatternExpander
+from .processors import (
+    BanTokenProcessor,
+    CiteFromPromptLogitsProcessor,
+    ForceLastPhraseLogitsProcessor,
+    GenLengthLogitsProcessor,
+    MultipleChoiceLogitsProcessor,
+    TriggerPhraseLogitsProcessor,
+)
 from .rule_engine import (
     RuleEngine,
 )
@@ -280,6 +292,103 @@ class ConfigParser:
 
     def __repr__(self):
         return "ConfigParser()"
+
+
+class ProcessorConfig:
+    """Parsed logits processor configuration from YAML."""
+
+    def __init__(self, config: Dict[str, Any]):
+        self.gen_length: Optional[Dict[str, Any]] = config.get("gen_length")
+        self.cite_from_prompt: Optional[Dict[str, Any]] = config.get("cite_from_prompt")
+        self.force_last_phrase: Optional[Dict[str, Any]] = config.get("force_last_phrase")
+        self.multiple_choice: Optional[Dict[str, Any]] = config.get("multiple_choice")
+        self.ban_token: Optional[Dict[str, Any]] = config.get("ban_token")
+        self.trigger_phrases: List[Dict[str, str]] = config.get("trigger_phrases", [])
+
+
+def load_processors_from_yaml(
+    yaml_path: str,
+    tokenizer: PreTrainedTokenizerBase,
+) -> List:
+    """
+    Load and instantiate logits processors from the ``processors`` section
+    of a YAML configuration file.
+
+    Args:
+        yaml_path: Path to the YAML configuration file.
+        tokenizer: HuggingFace tokenizer instance.
+
+    Returns:
+        A list of instantiated ``transformers.LogitsProcessor`` objects.
+    """
+    with open(yaml_path, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+
+    if not data or "processors" not in data:
+        return []
+
+    proc_config = ProcessorConfig(data["processors"])
+    processors = []
+
+    # ── GenLengthLogitsProcessor ──────────────────────────────────────────
+    gl = proc_config.gen_length
+    if gl and gl.get("enabled", True):
+        processors.append(GenLengthLogitsProcessor(
+            tokenizer=tokenizer,
+            min_length=gl.get("min_length", 0),
+            max_length=gl.get("max_length"),
+            eos_penalty=gl.get("eos_penalty", -10.0),
+            eos_boost=gl.get("eos_boost", 5.0),
+        ))
+
+    # ── CiteFromPromptLogitsProcessor ─────────────────────────────────────
+    cp = proc_config.cite_from_prompt
+    if cp and cp.get("enabled", False) and "prompt" in cp:
+        prompt_ids = tokenizer.encode(cp["prompt"], return_tensors="pt")[0]
+        processors.append(CiteFromPromptLogitsProcessor(
+            tokenizer=tokenizer,
+            prompt_ids=prompt_ids,
+            boost_factor=cp.get("boost_factor", 2.0),
+        ))
+
+    # ── ForceLastPhraseLogitsProcessor ────────────────────────────────────
+    flp = proc_config.force_last_phrase
+    if flp and flp.get("enabled", True) and "phrase" in flp:
+        processors.append(ForceLastPhraseLogitsProcessor(
+            tokenizer=tokenizer,
+            phrase=flp["phrase"],
+            trigger_length=flp.get("trigger_length"),
+        ))
+
+    # ── MultipleChoiceLogitsProcessor ─────────────────────────────────────
+    mc = proc_config.multiple_choice
+    if mc and mc.get("enabled", False) and "choices" in mc and mc["choices"]:
+        processors.append(MultipleChoiceLogitsProcessor(
+            tokenizer=tokenizer,
+            choices=mc["choices"],
+        ))
+
+    # ── BanTokenProcessor ─────────────────────────────────────────────────
+    bt = proc_config.ban_token
+    if bt and bt.get("enabled", True):
+        processors.append(BanTokenProcessor(
+            tokenizer=tokenizer,
+            banned_tokens=bt.get("banned_tokens"),
+            banned_token_ids=bt.get("banned_token_ids"),
+        ))
+
+    # ── TriggerPhraseLogitsProcessor(s) ───────────────────────────────────
+    for pair in proc_config.trigger_phrases:
+        trigger = pair.get("trigger", "")
+        response = pair.get("response", "")
+        if trigger and response:
+            processors.append(TriggerPhraseLogitsProcessor(
+                tokenizer=tokenizer,
+                trigger=trigger,
+                response=response,
+            ))
+
+    return processors
 
 
 def load_rules_from_yaml(

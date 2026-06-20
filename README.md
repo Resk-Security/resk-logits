@@ -191,6 +191,170 @@ multi_level = MultiLevelShadowBanProcessor(
 )
 ```
 
+## Utility Logits Processors
+
+ReskLogits provides a collection of ready-to-use logits processors for
+common generation control tasks.
+
+### GenLengthLogitsProcessor
+
+Adjusts the EOS token logit to control sequence length:
+
+```python
+from resklogits import GenLengthLogitsProcessor
+
+length_ctrl = GenLengthLogitsProcessor(
+    tokenizer,
+    min_length=30,      # Penalise EOS before 30 tokens
+    max_length=200,     # Boost EOS after 200 tokens
+    eos_penalty=-10.0,  # Penalty when below min
+    eos_boost=5.0,      # Boost when above max
+)
+```
+
+### CiteFromPromptLogitsProcessor
+
+Boosts tokens that appear in the prompt — ideal for RAG / attentive reading:
+
+```python
+from resklogits import CiteFromPromptLogitsProcessor
+
+prompt_ids = tokenizer(prompt, return_tensors="pt")["input_ids"][0]
+cite = CiteFromPromptLogitsProcessor(
+    tokenizer,
+    prompt_ids=prompt_ids,
+    boost_factor=2.0,  # Boost prompt tokens by +2.0
+)
+```
+
+### ForceLastPhraseLogitsProcessor
+
+Forces a specific phrase at the end of the generated sequence.
+Useful for structured output (signatures, footers, validation tokens):
+
+```python
+from resklogits import ForceLastPhraseLogitsProcessor
+
+# Force "FIN_ACTION" at the end (trigger_length = max_new_tokens - phrase_len)
+force = ForceLastPhraseLogitsProcessor(
+    tokenizer,
+    phrase="\n\nFIN_ACTION",
+    trigger_length=195,  # Start forcing when seq_len reaches 195
+)
+
+# Or trigger manually at any point:
+force.force_now()
+```
+
+### MultipleChoiceLogitsProcessor
+
+Restricts generation to a predefined set of choices (MCQ, True/False, etc.):
+
+```python
+from resklogits import MultipleChoiceLogitsProcessor
+
+mcq = MultipleChoiceLogitsProcessor(
+    tokenizer,
+    choices=["0", "1", "2", "3"],
+)
+
+# All logits except those for "0", "1", "2", "3" are set to -inf
+```
+
+### BanTokenProcessor
+
+Hard-blocks specific tokens (strings or IDs) — complementary to
+ShadowBan's phrase-level penalty approach:
+
+```python
+from resklogits import BanTokenProcessor
+
+ban = BanTokenProcessor(
+    tokenizer,
+    banned_tokens=["rm", "DROP", "SELECT"],
+    # or banned_token_ids=[0, 1, 2]
+)
+
+# Add / remove tokens dynamically:
+ban.add_banned_tokens([100, 200])
+ban.remove_banned_tokens([0])
+ban.add_banned_strings(tokenizer, ["FORMAT", "TRUNCATE"])
+```
+
+### TriggerPhraseLogitsProcessor
+
+Watches for a trigger phrase token-by-token. When detected, it forces
+the model to generate a predefined response. Uses a state machine for
+exact trigger matching:
+
+```python
+from resklogits import TriggerPhraseLogitsProcessor
+
+# Auto-complete code after ```python marker
+trigger = TriggerPhraseLogitsProcessor(
+    tokenizer,
+    trigger="\n```python",
+    response="import torch\nimport numpy as np\n\ndef main():",
+)
+```
+
+### YAML Configuration
+
+All utility processors can be configured via YAML file and loaded in
+one call:
+
+```yaml
+# processors.yaml
+processors:
+  gen_length:
+    min_length: 10
+    max_length: 200
+
+  force_last_phrase:
+    phrase: "\n\nFIN_ACTION"
+    trigger_length: 197
+
+  ban_token:
+    banned_tokens: ["rm -rf", "DROP TABLE"]
+
+  trigger_phrases:
+    - trigger: "\n```python"
+      response: "import torch\n"
+```
+
+```python
+from resklogits.config_parser import load_processors_from_yaml
+
+procs = load_processors_from_yaml("processors.yaml", tokenizer)
+
+# Pass directly to generate
+outputs = model.generate(..., logits_processor=procs)
+```
+
+### vLLM Compatibility
+
+The `VLLMWrapper` adapts any Transformers `LogitsProcessor` for use
+with vLLM's `SamplingParams`:
+
+```python
+from resklogits import to_vllm, to_vllm_list
+from resklogits import ShadowBanProcessor, BanTokenProcessor
+
+# Single processor
+shadow_ban = ShadowBanProcessor(tokenizer, banned_phrases, device="cuda")
+vllm_proc = to_vllm(shadow_ban)
+
+# List of processors
+procs = to_vllm_list([
+    ShadowBanProcessor(tokenizer, banned_phrases, device="cuda"),
+    BanTokenProcessor(tokenizer, banned_tokens=["rm"]),
+])
+
+# Pass to vLLM
+from vllm import SamplingParams
+params = SamplingParams(logits_processors=vllm_proc)
+```
+
 ## Symbolic Rule Generator
 
 Generate patterns from YAML rules instead of manually listing them:
@@ -451,6 +615,16 @@ resklogits/
 │       ├── __init__.py
 │       ├── vectorized_aho_corasick.py
 │       ├── shadow_ban_processor.py
+│       ├── vllm_adapter.py              # vLLM compatibility wrapper
+│       ├── config_parser.py             # YAML parser (rules + processors)
+│       ├── processors/
+│       │   ├── __init__.py
+│       │   ├── gen_length.py
+│       │   ├── cite_from_prompt.py
+│       │   ├── force_last_phrase.py
+│       │   ├── multiple_choice.py
+│       │   ├── ban_token.py
+│       │   └── trigger_phrase.py
 │       └── data/
 │           └── banned_phrases.json
 ├── examples/
@@ -458,6 +632,8 @@ resklogits/
 │   ├── example_usage.py
 │   └── benchmark.py
 ├── tests/
+│   ├── test_basic.py
+│   └── test_processors.py              # 30+ tests for utility processors
 ├── pyproject.toml
 └── README.md
 ```

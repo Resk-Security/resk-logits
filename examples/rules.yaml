@@ -175,3 +175,30 @@ rules:
       - "forget your training"
       - "act as evil ai"
 
+# ── Logits Processors ────────────────────────────────────────────────────────
+processors:
+  gen_length:
+    enabled: true
+    min_length: 10
+    max_length: 200
+    eos_penalty: -10.0
+    eos_boost: 5.0
+
+  force_last_phrase:
+    enabled: true
+    phrase: "\n\nFIN_ACTION"
+    trigger_length: 197
+
+  ban_token:
+    enabled: true
+    banned_tokens:
+      - "rm -rf"
+      - "DROP TABLE"
+      - "FORMAT"
+
+  trigger_phrases:
+    - trigger: "\n```python"
+      response: "import torch\nimport numpy as np\n\n"
+    - trigger: "\n```javascript"
+      response: "const express = require('express');\n"
+
