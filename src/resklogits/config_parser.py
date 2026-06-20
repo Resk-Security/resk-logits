@@ -333,60 +333,72 @@ def load_processors_from_yaml(
     # ── GenLengthLogitsProcessor ──────────────────────────────────────────
     gl = proc_config.gen_length
     if gl and gl.get("enabled", True):
-        processors.append(GenLengthLogitsProcessor(
-            tokenizer=tokenizer,
-            min_length=gl.get("min_length", 0),
-            max_length=gl.get("max_length"),
-            eos_penalty=gl.get("eos_penalty", -10.0),
-            eos_boost=gl.get("eos_boost", 5.0),
-        ))
+        processors.append(
+            GenLengthLogitsProcessor(
+                tokenizer=tokenizer,
+                min_length=gl.get("min_length", 0),
+                max_length=gl.get("max_length"),
+                eos_penalty=gl.get("eos_penalty", -10.0),
+                eos_boost=gl.get("eos_boost", 5.0),
+            )
+        )
 
     # ── CiteFromPromptLogitsProcessor ─────────────────────────────────────
     cp = proc_config.cite_from_prompt
     if cp and cp.get("enabled", False) and "prompt" in cp:
         prompt_ids = tokenizer.encode(cp["prompt"], return_tensors="pt")[0]
-        processors.append(CiteFromPromptLogitsProcessor(
-            tokenizer=tokenizer,
-            prompt_ids=prompt_ids,
-            boost_factor=cp.get("boost_factor", 2.0),
-        ))
+        processors.append(
+            CiteFromPromptLogitsProcessor(
+                tokenizer=tokenizer,
+                prompt_ids=prompt_ids,
+                boost_factor=cp.get("boost_factor", 2.0),
+            )
+        )
 
     # ── ForceLastPhraseLogitsProcessor ────────────────────────────────────
     flp = proc_config.force_last_phrase
     if flp and flp.get("enabled", True) and "phrase" in flp:
-        processors.append(ForceLastPhraseLogitsProcessor(
-            tokenizer=tokenizer,
-            phrase=flp["phrase"],
-            trigger_length=flp.get("trigger_length"),
-        ))
+        processors.append(
+            ForceLastPhraseLogitsProcessor(
+                tokenizer=tokenizer,
+                phrase=flp["phrase"],
+                trigger_length=flp.get("trigger_length"),
+            )
+        )
 
     # ── MultipleChoiceLogitsProcessor ─────────────────────────────────────
     mc = proc_config.multiple_choice
     if mc and mc.get("enabled", False) and "choices" in mc and mc["choices"]:
-        processors.append(MultipleChoiceLogitsProcessor(
-            tokenizer=tokenizer,
-            choices=mc["choices"],
-        ))
+        processors.append(
+            MultipleChoiceLogitsProcessor(
+                tokenizer=tokenizer,
+                choices=mc["choices"],
+            )
+        )
 
     # ── BanTokenProcessor ─────────────────────────────────────────────────
     bt = proc_config.ban_token
     if bt and bt.get("enabled", True):
-        processors.append(BanTokenProcessor(
-            tokenizer=tokenizer,
-            banned_tokens=bt.get("banned_tokens"),
-            banned_token_ids=bt.get("banned_token_ids"),
-        ))
+        processors.append(
+            BanTokenProcessor(
+                tokenizer=tokenizer,
+                banned_tokens=bt.get("banned_tokens"),
+                banned_token_ids=bt.get("banned_token_ids"),
+            )
+        )
 
     # ── TriggerPhraseLogitsProcessor(s) ───────────────────────────────────
     for pair in proc_config.trigger_phrases:
         trigger = pair.get("trigger", "")
         response = pair.get("response", "")
         if trigger and response:
-            processors.append(TriggerPhraseLogitsProcessor(
-                tokenizer=tokenizer,
-                trigger=trigger,
-                response=response,
-            ))
+            processors.append(
+                TriggerPhraseLogitsProcessor(
+                    tokenizer=tokenizer,
+                    trigger=trigger,
+                    response=response,
+                )
+            )
 
     return processors
 

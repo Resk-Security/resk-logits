@@ -22,9 +22,7 @@ class MultipleChoiceLogitsProcessor(LogitsProcessor):
             raise ValueError(f"No valid tokens found for choices: {choices}")
 
     def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor) -> torch.FloatTensor:
-        valid_ids = torch.tensor(
-            list(self.valid_token_ids), device=scores.device, dtype=torch.long
-        )
+        valid_ids = torch.tensor(list(self.valid_token_ids), device=scores.device, dtype=torch.long)
         mask = torch.full_like(scores, -float("inf"))
         mask[:, valid_ids] = scores[:, valid_ids]
         return mask

@@ -23,6 +23,7 @@ class BanTokenProcessor(LogitsProcessor):
 
         if not self.banned_ids:
             import warnings
+
             warnings.warn(
                 "BanTokenProcessor created with no banned tokens. "
                 "The processor will be a no-op.",

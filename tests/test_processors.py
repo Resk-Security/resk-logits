@@ -16,6 +16,7 @@ def _get_tokenizer():
 
 def test_gen_length_imports():
     from resklogits import GenLengthLogitsProcessor
+
     assert GenLengthLogitsProcessor is not None
 
 
@@ -23,9 +24,7 @@ def test_gen_length_penalises_eos_below_min():
     from resklogits import GenLengthLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = GenLengthLogitsProcessor(
-        tokenizer, min_length=10, eos_penalty=-100.0
-    )
+    processor = GenLengthLogitsProcessor(tokenizer, min_length=10, eos_penalty=-100.0)
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 3))
@@ -40,9 +39,7 @@ def test_gen_length_boosts_eos_above_max():
     from resklogits import GenLengthLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = GenLengthLogitsProcessor(
-        tokenizer, max_length=5, eos_boost=100.0
-    )
+    processor = GenLengthLogitsProcessor(tokenizer, max_length=5, eos_boost=100.0)
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 10))
@@ -57,9 +54,7 @@ def test_gen_length_no_modification_in_middle():
     from resklogits import GenLengthLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = GenLengthLogitsProcessor(
-        tokenizer, min_length=0, max_length=100
-    )
+    processor = GenLengthLogitsProcessor(tokenizer, min_length=0, max_length=100)
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -75,6 +70,7 @@ def test_gen_length_no_modification_in_middle():
 
 def test_cite_from_prompt_imports():
     from resklogits import CiteFromPromptLogitsProcessor
+
     assert CiteFromPromptLogitsProcessor is not None
 
 
@@ -84,9 +80,7 @@ def test_cite_from_prompt_boosts_prompt_tokens():
     tokenizer = _get_tokenizer()
     prompt_ids = tokenizer.encode("The quick brown fox", return_tensors="pt")[0]
 
-    processor = CiteFromPromptLogitsProcessor(
-        tokenizer, prompt_ids=prompt_ids, boost_factor=50.0
-    )
+    processor = CiteFromPromptLogitsProcessor(tokenizer, prompt_ids=prompt_ids, boost_factor=50.0)
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -105,9 +99,7 @@ def test_cite_from_prompt_with_empty_prompt_ids():
     from resklogits import CiteFromPromptLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = CiteFromPromptLogitsProcessor(
-        tokenizer, prompt_ids=[], boost_factor=2.0
-    )
+    processor = CiteFromPromptLogitsProcessor(tokenizer, prompt_ids=[], boost_factor=2.0)
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -123,6 +115,7 @@ def test_cite_from_prompt_with_empty_prompt_ids():
 
 def test_force_last_phrase_imports():
     from resklogits import ForceLastPhraseLogitsProcessor
+
     assert ForceLastPhraseLogitsProcessor is not None
 
 
@@ -131,9 +124,7 @@ def test_force_last_phrase_triggers_at_length():
 
     tokenizer = _get_tokenizer()
     phrase = "Done."
-    processor = ForceLastPhraseLogitsProcessor(
-        tokenizer, phrase=phrase, trigger_length=5
-    )
+    processor = ForceLastPhraseLogitsProcessor(tokenizer, phrase=phrase, trigger_length=5)
 
     vocab_size = tokenizer.vocab_size
     # Below trigger length
@@ -171,9 +162,7 @@ def test_force_last_phrase_reset():
     from resklogits import ForceLastPhraseLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = ForceLastPhraseLogitsProcessor(
-        tokenizer, phrase="Test", trigger_length=5
-    )
+    processor = ForceLastPhraseLogitsProcessor(tokenizer, phrase="Test", trigger_length=5)
 
     processor.force_now()
     assert processor.position == 0
@@ -186,6 +175,7 @@ def test_force_last_phrase_reset():
 
 def test_multiple_choice_imports():
     from resklogits import MultipleChoiceLogitsProcessor
+
     assert MultipleChoiceLogitsProcessor is not None
 
 
@@ -193,9 +183,7 @@ def test_multiple_choice_restricts_to_valid_tokens():
     from resklogits import MultipleChoiceLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = MultipleChoiceLogitsProcessor(
-        tokenizer, choices=["0", "1", "2", "3"]
-    )
+    processor = MultipleChoiceLogitsProcessor(tokenizer, choices=["0", "1", "2", "3"])
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -227,6 +215,7 @@ def test_multiple_choice_raises_on_empty():
 
 def test_ban_token_imports():
     from resklogits import BanTokenProcessor
+
     assert BanTokenProcessor is not None
 
 
@@ -234,9 +223,7 @@ def test_ban_token_blocks_by_id():
     from resklogits import BanTokenProcessor
 
     tokenizer = _get_tokenizer()
-    processor = BanTokenProcessor(
-        tokenizer, banned_token_ids=[0, 1, 2]
-    )
+    processor = BanTokenProcessor(tokenizer, banned_token_ids=[0, 1, 2])
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -253,9 +240,7 @@ def test_ban_token_blocks_by_string():
     from resklogits import BanTokenProcessor
 
     tokenizer = _get_tokenizer()
-    processor = BanTokenProcessor(
-        tokenizer, banned_tokens=["rm", "DROP"]
-    )
+    processor = BanTokenProcessor(tokenizer, banned_tokens=["rm", "DROP"])
 
     vocab_size = tokenizer.vocab_size
     input_ids = torch.randint(0, vocab_size, (1, 5))
@@ -291,6 +276,7 @@ def test_ban_token_add_remove():
 
 def test_to_vllm_imports():
     from resklogits import VLLMWrapper, to_vllm, to_vllm_list
+
     assert VLLMWrapper is not None
     assert to_vllm is not None
     assert to_vllm_list is not None
@@ -347,6 +333,7 @@ def test_vllm_list():
 
 def test_trigger_phrase_imports():
     from resklogits import TriggerPhraseLogitsProcessor
+
     assert TriggerPhraseLogitsProcessor is not None
 
 
@@ -373,9 +360,7 @@ def test_trigger_phrase_detection_triggers_response():
     tokenizer = _get_tokenizer()
     trigger = "Hello"
     response = " World"
-    processor = TriggerPhraseLogitsProcessor(
-        tokenizer, trigger=trigger, response=response
-    )
+    processor = TriggerPhraseLogitsProcessor(tokenizer, trigger=trigger, response=response)
 
     # Build input_ids ending with the trigger
     trigger_ids = tokenizer.encode(trigger, add_special_tokens=False)
@@ -404,9 +389,7 @@ def test_trigger_phrase_full_flow():
     from resklogits import TriggerPhraseLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = TriggerPhraseLogitsProcessor(
-        tokenizer, trigger="Hi", response=" there"
-    )
+    processor = TriggerPhraseLogitsProcessor(tokenizer, trigger="Hi", response=" there")
 
     trigger_ids = processor.trigger_ids
     response_ids = processor.response_ids
@@ -438,9 +421,7 @@ def test_trigger_phrase_reset():
     from resklogits import TriggerPhraseLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = TriggerPhraseLogitsProcessor(
-        tokenizer, trigger="Hi", response=" there"
-    )
+    processor = TriggerPhraseLogitsProcessor(tokenizer, trigger="Hi", response=" there")
 
     # Trigger it
     trigger_ids = processor.trigger_ids
@@ -461,9 +442,7 @@ def test_trigger_phrase_raises_on_empty_trigger():
 
     tokenizer = _get_tokenizer()
     with pytest.raises(ValueError, match="no tokens"):
-        TriggerPhraseLogitsProcessor(
-            tokenizer, trigger="", response="test"
-        )
+        TriggerPhraseLogitsProcessor(tokenizer, trigger="", response="test")
 
 
 # ── YAML config loading ─────────────────────────────────────────────────────
@@ -502,6 +481,7 @@ processors:
         GenLengthLogitsProcessor,
         TriggerPhraseLogitsProcessor,
     )
+
     assert isinstance(procs[0], GenLengthLogitsProcessor)
     assert isinstance(procs[1], BanTokenProcessor)
     assert isinstance(procs[2], TriggerPhraseLogitsProcessor)

@@ -42,8 +42,8 @@ class VectorizedAhoCorasick:
 
         # 1. Tokenize all banned phrases using batch processing
         if banned_phrases:
-            # Use batch_encode_plus for faster tokenization
-            encoded = tokenizer.batch_encode_plus(
+            # Use batch tokenization
+            encoded = tokenizer(
                 banned_phrases,
                 add_special_tokens=False,
                 return_attention_mask=False,
