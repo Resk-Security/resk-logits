@@ -1,4 +1,5 @@
-from typing import List
+from contextlib import contextmanager
+from typing import Generator, List
 
 import torch
 from transformers import LogitsProcessor
@@ -77,6 +78,14 @@ class TriggerPhraseLogitsProcessor(LogitsProcessor):
         self.match_position = 0
         self.response_position = -1
         self._done = False
+
+    @contextmanager
+    def stream(self) -> Generator[None, None, None]:
+        self.reset()
+        try:
+            yield
+        finally:
+            self.reset()
 
     def __repr__(self) -> str:
         return (

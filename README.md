@@ -123,8 +123,93 @@ print(f"Generated text: {generated_text}")
 - 🛡️ **Jailbreak-resistant**: Stateful detection captures partial generations
 - 📈 **Scalable**: Handles 1000+ banned phrases
 - 🔧 **Easy to integrate**: Compatible with HuggingFace Transformers, vLLM, TGI
+- ⚡ **Streaming-ready**: Built-in ``stream()`` context manager and ``stream_generate()`` helper
 
 ---
+
+## Streaming
+
+All stateful processors (``ShadowBanProcessor``, ``ForceLastPhraseLogitsProcessor``,
+``TriggerPhraseLogitsProcessor``) provide a ``stream()`` context manager that
+auto-resets internal state on enter and exit.
+
+### With ``stream_generate()`` (recommended)
+
+```python
+from resklogits import ShadowBanProcessor, stream_generate
+
+shadow_ban = ShadowBanProcessor(tokenizer, banned_phrases, device="cpu")
+
+for chunk in stream_generate(
+    model, tokenizer, "Tell me about",
+    logits_processors=[shadow_ban],
+    max_new_tokens=50,
+    temperature=0.7,
+):
+    print(chunk, end="", flush=True)
+```
+
+```python
+# Works with any combination of processors
+from resklogits import (
+    GenLengthLogitsProcessor,
+    BanTokenProcessor,
+    ForceLastPhraseLogitsProcessor,
+    stream_generate,
+)
+
+procs = [
+    GenLengthLogitsProcessor(tokenizer, min_length=20, max_length=100),
+    BanTokenProcessor(tokenizer, banned_tokens=["rm"]),
+    ForceLastPhraseLogitsProcessor(tokenizer, phrase="\n\nFIN_ACTION", trigger_length=98),
+]
+
+for chunk in stream_generate(model, tokenizer, "Explain RAG", logits_processors=procs):
+    print(chunk, end="", flush=True)
+```
+
+### With ``TextIteratorStreamer`` (manual)
+
+```python
+from threading import Thread
+from transformers import TextIteratorStreamer
+from resklogits import ShadowBanProcessor
+
+shadow_ban = ShadowBanProcessor(tokenizer, banned_phrases, device="cpu")
+streamer = TextIteratorStreamer(tokenizer, skip_prompt=True)
+
+inputs = tokenizer("Tell me about", return_tensors="pt")
+
+with shadow_ban.stream():  # auto reset on enter + exit
+    thread = Thread(target=model.generate, kwargs={
+        **inputs,
+        max_new_tokens=50,
+        logits_processor=[shadow_ban],
+        streamer=streamer,
+    })
+    thread.start()
+    for text in streamer:
+        print(text, end="", flush=True)
+```
+
+### With vLLM
+
+```python
+from resklogits import to_vllm, BanTokenProcessor
+from vllm import LLM, SamplingParams
+
+ban = to_vllm(BanTokenProcessor(tokenizer, banned_tokens=["rm"]))
+llm = LLM(model="gpt2")
+params = SamplingParams(temperature=0.7, logits_processors=[ban])
+
+for output in llm.generate(["Tell me about"], params):
+    for token in output.outputs[0].token_ids:
+        print(tokenizer.decode(token), end="", flush=True)
+```
+
+---
+
+## Architecture
 
 ## Architecture
 

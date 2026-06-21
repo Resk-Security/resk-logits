@@ -19,6 +19,7 @@ from .processors import (
 from .rule_engine import ContainsRule, ExactRule, Rule, RuleEngine, StartsWithRule
 from .rule_templates import Template, TemplateEngine
 from .shadow_ban_processor import MultiLevelShadowBanProcessor, ShadowBanProcessor
+from .streaming import stream_generate
 from .vectorized_aho_corasick import VectorizedAhoCorasick
 from .vllm_adapter import VLLMWrapper, to_vllm, to_vllm_list
 
@@ -51,6 +52,8 @@ __all__ = [
     # Caching
     "RuleCache",
     "CachedGenerator",
+    # Streaming
+    "stream_generate",
     # vLLM compatibility
     "VLLMWrapper",
     "to_vllm",

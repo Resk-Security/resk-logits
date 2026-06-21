@@ -498,3 +498,63 @@ def test_load_processors_from_yaml_no_processors_section(tmp_path):
 
     procs = load_processors_from_yaml(str(yaml_path), tokenizer)
     assert procs == []
+
+
+# ── Streaming ────────────────────────────────────────────────────────────────
+
+
+def test_stream_context_manager_resets_state():
+    from resklogits import ForceLastPhraseLogitsProcessor
+
+    tokenizer = _get_tokenizer()
+    processor = ForceLastPhraseLogitsProcessor(
+        tokenizer, phrase="END", trigger_length=10
+    )
+
+    processor.force_now()
+    assert processor.position >= 0
+
+    with processor.stream():
+        assert processor.position == -1
+        processor.force_now()
+        assert processor.position >= 0
+
+    assert processor.position == -1
+
+
+def test_stream_context_manager_on_trigger_phrase():
+    from resklogits import TriggerPhraseLogitsProcessor
+
+    tokenizer = _get_tokenizer()
+    processor = TriggerPhraseLogitsProcessor(
+        tokenizer, trigger="Hi", response=" there"
+    )
+
+    with processor.stream():
+        assert processor.match_position == 0
+        assert processor.response_position == -1
+
+    assert processor.match_position == 0
+    assert processor.response_position == -1
+
+
+def test_stream_context_manager_on_shadow_ban():
+    from resklogits import ShadowBanProcessor
+
+    tokenizer = _get_tokenizer()
+    processor = ShadowBanProcessor(
+        tokenizer, banned_phrases=["bad"], device="cpu"
+    )
+
+    # Simulate some state
+    processor.states[0] = 5
+
+    with processor.stream():
+        assert 0 not in processor.states
+
+    assert 0 not in processor.states
+
+
+def test_stream_generate_import():
+    from resklogits import stream_generate
+    assert stream_generate is not None

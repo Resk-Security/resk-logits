@@ -5,7 +5,8 @@ This module implements a LogitsProcessor that uses vectorized Aho-Corasick
 to apply GPU-accelerated shadow bans on dangerous tokens during generation.
 """
 
-from typing import Dict, List, Optional
+from contextlib import contextmanager
+from typing import Dict, Generator, List, Optional
 
 import torch
 from transformers import LogitsProcessor
@@ -101,6 +102,22 @@ class ShadowBanProcessor(LogitsProcessor):
         """Reset automaton state (call between generations)."""
         self.current_state = 0
         self.states.clear()
+
+    @contextmanager
+    def stream(self) -> Generator[None, None, None]:
+        """Context manager that auto-resets state before and after streaming.
+
+        Usage::
+
+            with processor.stream():
+                for text in streamer:
+                    print(text, end="", flush=True)
+        """
+        self.reset()
+        try:
+            yield
+        finally:
+            self.reset()
 
     def get_current_matches(self, batch_idx: int = 0) -> List[str]:
         """
@@ -211,3 +228,12 @@ class MultiLevelShadowBanProcessor(ShadowBanProcessor):
         """Reset all automaton states."""
         for level in self.automatons.keys():
             self.level_states[level].clear()
+
+    @contextmanager
+    def stream(self) -> Generator[None, None, None]:
+        """Context manager that auto-resets state before and after streaming."""
+        self.reset()
+        try:
+            yield
+        finally:
+            self.reset()

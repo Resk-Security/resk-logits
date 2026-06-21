@@ -1,4 +1,5 @@
-from typing import List, Optional
+from contextlib import contextmanager
+from typing import Generator, List, Optional
 
 import torch
 from transformers import LogitsProcessor
@@ -43,6 +44,14 @@ class ForceLastPhraseLogitsProcessor(LogitsProcessor):
 
     def reset(self):
         self.position = -1
+
+    @contextmanager
+    def stream(self) -> Generator[None, None, None]:
+        self.reset()
+        try:
+            yield
+        finally:
+            self.reset()
 
     def __repr__(self) -> str:
         return (
