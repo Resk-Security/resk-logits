@@ -507,9 +507,7 @@ def test_stream_context_manager_resets_state():
     from resklogits import ForceLastPhraseLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = ForceLastPhraseLogitsProcessor(
-        tokenizer, phrase="END", trigger_length=10
-    )
+    processor = ForceLastPhraseLogitsProcessor(tokenizer, phrase="END", trigger_length=10)
 
     processor.force_now()
     assert processor.position >= 0
@@ -526,9 +524,7 @@ def test_stream_context_manager_on_trigger_phrase():
     from resklogits import TriggerPhraseLogitsProcessor
 
     tokenizer = _get_tokenizer()
-    processor = TriggerPhraseLogitsProcessor(
-        tokenizer, trigger="Hi", response=" there"
-    )
+    processor = TriggerPhraseLogitsProcessor(tokenizer, trigger="Hi", response=" there")
 
     with processor.stream():
         assert processor.match_position == 0
@@ -542,9 +538,7 @@ def test_stream_context_manager_on_shadow_ban():
     from resklogits import ShadowBanProcessor
 
     tokenizer = _get_tokenizer()
-    processor = ShadowBanProcessor(
-        tokenizer, banned_phrases=["bad"], device="cpu"
-    )
+    processor = ShadowBanProcessor(tokenizer, banned_phrases=["bad"], device="cpu")
 
     # Simulate some state
     processor.states[0] = 5
@@ -557,4 +551,5 @@ def test_stream_context_manager_on_shadow_ban():
 
 def test_stream_generate_import():
     from resklogits import stream_generate
+
     assert stream_generate is not None
