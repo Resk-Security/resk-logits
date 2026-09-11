@@ -10,6 +10,8 @@
 [![GitHub issues](https://img.shields.io/github/issues/Resk-Security/resk-logits.svg)](https://github.com/Resk-Security/resk-logits/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Resk-Security/resk-logits)](https://github.com/Resk-Security/resk-logits/commits/main)
 
+🔗 [resk.fr/projects/resklogits](https://resk.fr/projects/resklogits.html) — part of [RESK Security](https://resk.fr)
+
 ## Installation
 
 ```bash
