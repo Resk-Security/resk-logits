@@ -12,6 +12,8 @@
 
 🔗 [resk.fr/projects/resklogits](https://resk.fr/projects/resklogits.html) — part of [RESK Security](https://resk.fr)
 
+📚 Guide: [Shadow-Ban LLM Output Filtering](https://resk.fr/blog/shadow-ban-llm-output-filtering.html)
+
 ## Installation
 
 ```bash
