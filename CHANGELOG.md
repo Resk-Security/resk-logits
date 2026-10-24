@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-09-11
+
+### Added
+- Streaming helpers: `stream()` context manager and `stream_generate()`.
+- 8 utility logits processors (length control, forced ending, MCQ restriction,
+  token bans, trigger phrases, citation grounding, etc.).
+- vLLM adapter (`to_vllm()`, `to_vllm_list()`, `VLLMWrapper`).
+- YAML processor configuration and symbolic rule builder.
+- Support for Python 3.10 through 3.14 (metadata previously required 3.13).
+- Explicit PyPI license metadata (Apache-2.0).
+
+### Fixed
+- `transformers` v5 `batch_encode_plus` compatibility.
+- Ruff/Black issues in the streaming and processor code.
+
 ## [0.1.0] - 2024-11-13
 
 ### Added

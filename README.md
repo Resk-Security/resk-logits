@@ -20,7 +20,9 @@
 pip install resklogits
 ```
 
-## Usage rapide (30 seconds)
+Python 3.10+ on CPU or CUDA. Requires PyTorch 2.x and Transformers 4.35+.
+
+## Quick start (30 seconds)
 
 ```python
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -47,7 +49,7 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 The model naturally steers away from dangerous tokens — no exception raised, no truncated output, nothing visible to the user.
 
-## Pourquoi ReskLogits ?
+## Why ReskLogits?
 
 Content filters scan text **after** generation: by the time they catch a banned phrase, the model already produced it and your user already saw it (or a broken "regenerate" loop). Hard blocking (`logits[token] = -inf`) is visible and unnatural. ReskLogits applies an **invisible penalty** inside the generation loop, using a GPU/CPU-vectorized Aho-Corasick automaton that tracks partial matches across tokens — so jailbreak-style multi-token phrasings are still caught.
 
