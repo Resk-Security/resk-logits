@@ -21,6 +21,8 @@ Raw output: [`benchmarks/results.json`](benchmarks/results.json).
 
 ## Results (CPU, 2026-10-24)
 
+![resk-logits CPU benchmark](docs/benchmark.png)
+
 | Patterns | Build | Danger mask | Batch | Mean / step | p95 | Per item |
 |---:|---:|---:|---:|---:|---:|---:|
 | 100 | 0.4 ms | 201 tokens | 1 | 0.147 ms | 0.165 ms | 147 µs |
