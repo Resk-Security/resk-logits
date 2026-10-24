@@ -39,7 +39,7 @@ jobs:
 
       - name: Dependency audit
         if: matrix.os == 'ubuntu-latest'
-        run: uv run --with pip-audit pip-audit --skip-editable
+        run: uvx pip-audit --path .venv/lib/python*/site-packages --skip-editable
       
       - name: Check code formatting
         run: |
