@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.1] - 2026-10-24
+
+### Security
+- Require `torch>=2.13.0` and `filelock>=4.2.1` (PYSEC-2025-194 and the
+  filelock advisories fixed in 4.2.1).
+- Minimum Python is now 3.11 (filelock 4.2.1 requires it; Python 3.10 is EOL).
+- CI now runs `pip-audit` on every supported Python version.
+
 ## [0.2.0] - 2026-09-11
 
 ### Added
@@ -10,7 +18,7 @@ All notable changes to this project will be documented in this file.
   token bans, trigger phrases, citation grounding, etc.).
 - vLLM adapter (`to_vllm()`, `to_vllm_list()`, `VLLMWrapper`).
 - YAML processor configuration and symbolic rule builder.
-- Support for Python 3.10 through 3.14 (metadata previously required 3.13).
+- Support for Python 3.11 through 3.14 (metadata previously required 3.13).
 - Explicit PyPI license metadata (Apache-2.0).
 
 ### Fixed

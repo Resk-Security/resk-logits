@@ -23,7 +23,7 @@ from .streaming import stream_generate
 from .vectorized_aho_corasick import VectorizedAhoCorasick
 from .vllm_adapter import VLLMWrapper, to_vllm, to_vllm_list
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 __author__ = "RESK Team"
 __all__ = [
     # Core logits processors

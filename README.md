@@ -20,7 +20,7 @@
 pip install resklogits
 ```
 
-Python 3.10+ on CPU or CUDA. Requires PyTorch 2.x and Transformers 4.35+.
+Python 3.11+ on CPU or CUDA. Requires PyTorch 2.x and Transformers 4.35+.
 
 ## Quick start (30 seconds)
 
