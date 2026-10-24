@@ -49,6 +49,12 @@ print(tokenizer.decode(outputs[0], skip_special_tokens=True))
 
 The model naturally steers away from dangerous tokens — no exception raised, no truncated output, nothing visible to the user.
 
+## Performance
+
+Reproducible CPU overhead and the exact command are in
+[BENCHMARKS.md](BENCHMARKS.md). The short version: the per-token cost is flat
+in the number of patterns, and the build cost is what scales.
+
 ## Why ReskLogits?
 
 Content filters scan text **after** generation: by the time they catch a banned phrase, the model already produced it and your user already saw it (or a broken "regenerate" loop). Hard blocking (`logits[token] = -inf`) is visible and unnatural. ReskLogits applies an **invisible penalty** inside the generation loop, using a GPU/CPU-vectorized Aho-Corasick automaton that tracks partial matches across tokens — so jailbreak-style multi-token phrasings are still caught.

@@ -1,0 +1,80 @@
+{
+  "generated_at": "2026-10-24T15:51:50Z",
+  "python": "3.14.8",
+  "platform": "Linux-7.2.11-200.fc44.x86_64-x86_64-with-glibc2.43",
+  "processor": "",
+  "torch": "2.12.1+cu130",
+  "device": "cpu",
+  "vocab_size": 50257,
+  "runs": [
+    {
+      "patterns": 100,
+      "build_ms": 0.37,
+      "danger_tokens": 201,
+      "calls": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "mean_ms": 0.1472,
+          "p50_ms": 0.1438,
+          "p95_ms": 0.165,
+          "per_item_us": 147.18
+        },
+        {
+          "batch": 8,
+          "iterations": 200,
+          "mean_ms": 0.218,
+          "p50_ms": 0.1942,
+          "p95_ms": 0.2838,
+          "per_item_us": 27.26
+        }
+      ]
+    },
+    {
+      "patterns": 1000,
+      "build_ms": 4.34,
+      "danger_tokens": 2001,
+      "calls": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "mean_ms": 0.1695,
+          "p50_ms": 0.1641,
+          "p95_ms": 0.2072,
+          "per_item_us": 169.51
+        },
+        {
+          "batch": 8,
+          "iterations": 200,
+          "mean_ms": 0.2553,
+          "p50_ms": 0.241,
+          "p95_ms": 0.353,
+          "per_item_us": 31.91
+        }
+      ]
+    },
+    {
+      "patterns": 10000,
+      "build_ms": 40.8,
+      "danger_tokens": 20001,
+      "calls": [
+        {
+          "batch": 1,
+          "iterations": 200,
+          "mean_ms": 0.3429,
+          "p50_ms": 0.3076,
+          "p95_ms": 0.4288,
+          "per_item_us": 342.91
+        },
+        {
+          "batch": 8,
+          "iterations": 200,
+          "mean_ms": 0.7645,
+          "p50_ms": 0.7082,
+          "p95_ms": 1.0241,
+          "per_item_us": 95.56
+        }
+      ]
+    }
+  ]
+}

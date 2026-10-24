@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file.
 - `MultiLevelShadowBanProcessor` for tiered severity-based filtering
 - Comprehensive banned phrases dataset (400+ phrases across 20 categories)
 - Support for HuggingFace Transformers integration
-- Zero-latency GPU operations (~0.001ms per token)
+- GPU-accelerated operations (see BENCHMARKS.md for reproducible CPU numbers)
 - Example scripts (demo, benchmark, simple usage)
 - Full test suite
 - Documentation and quick start guide
@@ -49,7 +49,7 @@ All notable changes to this project will be documented in this file.
 
 ### Performance
 - Build time: ~0.5s for 1000 patterns
-- Processing overhead: ~0.001ms per token (GPU)
-- Generation overhead: <5%
+- Processing overhead: see BENCHMARKS.md; the 0.001 ms GPU figure is a vendor measurement and is not reproduced in this repository
+- Generation overhead: depends on model step time; measure with benchmarks/benchmark_processor.py
 - Memory: ~10MB for danger mask
 
