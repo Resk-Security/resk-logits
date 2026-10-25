@@ -1,6 +1,6 @@
 [project]
 name = "resklogits"
-version = "0.2.1"
+version = "0.2.2"
 description = "Generation-time LLM content filtering: GPU-accelerated logits processor with stateful multi-token matching"
 authors = [
     {name = "RESK Team"}

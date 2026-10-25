@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.2] - 2026-10-25
+
+### Fixed
+- `resklogits generate` no longer crashes: it read `args.synonyms` while the
+  parser defines `--no-synonyms`.
+- `device` now defaults to `cpu` in `ShadowBanProcessor`,
+  `MultiLevelShadowBanProcessor` and `VectorizedAhoCorasick`; pass
+  `device="cuda"` explicitly when the model runs on GPU.
+
 ## [0.2.1] - 2026-10-24
 
 ### Security
