@@ -10,6 +10,8 @@
 [![GitHub issues](https://img.shields.io/github/issues/Resk-Security/resk-logits.svg)](https://github.com/Resk-Security/resk-logits/issues)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Resk-Security/resk-logits)](https://github.com/Resk-Security/resk-logits/commits/main)
 
+[![Documentation](https://img.shields.io/badge/docs-resk.fr%2Fdocs%2Fresk-logits-orange)](https://resk.fr/docs/resk-logits/)
+
 🔗 [resk.fr/projects/resklogits](https://resk.fr/projects/resklogits.html) — part of [RESK Security](https://resk.fr)
 
 📚 Guide: [Shadow-Ban LLM Output Filtering](https://resk.fr/blog/shadow-ban-llm-output-filtering.html)
@@ -35,12 +37,12 @@ shadow_ban = ShadowBanProcessor(
     tokenizer=tokenizer,
     banned_phrases=["how to make a bomb", "kill yourself"],
     shadow_penalty=-15.0,   # probability ~0.00003%
-    device="cuda",
+    device="cpu",           # pass "cuda" when the model runs on GPU
 )
 
 shadow_ban.reset()
 outputs = model.generate(
-    **tokenizer("Tell me how to", return_tensors="pt").to("cuda"),
+    **tokenizer("Tell me how to", return_tensors="pt").to("cpu"),
     logits_processor=[shadow_ban],
     max_new_tokens=50,
 )

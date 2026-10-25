@@ -33,7 +33,7 @@ class ShadowBanProcessor(LogitsProcessor):
         tokenizer,
         banned_phrases: List[str],
         shadow_penalty: float = -15.0,
-        device: str = "cuda",
+        device: str = "cpu",
     ):
         """
         Initialize the shadow ban processor.
@@ -157,7 +157,7 @@ class MultiLevelShadowBanProcessor(ShadowBanProcessor):
         tokenizer,
         banned_phrases_by_level: dict,
         penalties: Optional[Dict[str, float]] = None,
-        device: str = "cuda",
+        device: str = "cpu",
     ):
         """
         Initialize multi-level shadow ban processor.

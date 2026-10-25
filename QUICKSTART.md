@@ -28,11 +28,11 @@ shadow_ban = ShadowBanProcessor(
     tokenizer=tokenizer,
     banned_phrases=banned,
     shadow_penalty=-15.0,
-    device="cuda"
+    device="cpu"   # pass "cuda" when the model runs on GPU
 )
 
 # Generate
-inputs = tokenizer("Tell me how to", return_tensors="pt").to("cuda")
+inputs = tokenizer("Tell me how to", return_tensors="pt").to("cpu")
 outputs = model.generate(
     **inputs,
     logits_processor=[shadow_ban],

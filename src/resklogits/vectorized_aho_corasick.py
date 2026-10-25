@@ -22,7 +22,7 @@ class VectorizedAhoCorasick:
     """
 
     def __init__(
-        self, tokenizer, banned_phrases: List[str], device: str = "cuda", verbose: bool = False
+        self, tokenizer, banned_phrases: List[str], device: str = "cpu", verbose: bool = False
     ):
         """
         Initialize the Aho-Corasick automaton.
