@@ -20,7 +20,10 @@ def cmd_generate(args):
     try:
         parser = ConfigParser()
         results = parser.generate_all_patterns(
-            args.rules, use_synonyms=not args.no_synonyms, use_cache=not args.no_cache, force=args.force
+            args.rules,
+            use_synonyms=not args.no_synonyms,
+            use_cache=not args.no_cache,
+            force=args.force,
         )
 
         # Flatten patterns
